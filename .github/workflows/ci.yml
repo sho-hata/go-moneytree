@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ['*']
+    branches: ["*"]
   pull_request:
-    branches: ['*']
+    branches: ["*"]
 
 jobs:
   test:
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.1'
+          go-version: "1.25.1"
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -47,13 +47,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.1'
+          go-version: "1.25.1"
 
-      - name: Install golangci-lint
-        run: make tools
-
-      - name: Run golangci-lint
-        run: make lint
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest-v2
 
   coverage:
     name: Coverage Check
@@ -65,11 +64,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.1'
+          go-version: "1.25.1"
 
       - name: Install tools
         run: make tools
 
       - name: Run tests and check coverage
         run: make coverage
-
