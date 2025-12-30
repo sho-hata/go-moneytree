@@ -1,3 +1,5 @@
 coverage:
+  paths:
+    - coverage.out
   threshold: 80
 

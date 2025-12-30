@@ -17,5 +17,5 @@ tools:
 
 # octocovを使用してカバレッジレポートを生成・確認（80%以上をチェック）
 coverage: test
-	octocov --coverage coverage.out
+	octocov
 
