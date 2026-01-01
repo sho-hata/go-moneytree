@@ -40,3 +40,21 @@ func (c *Client) GetProfile(ctx context.Context, accessToken string) (*Profile, 
 	}
 	return &profile, nil
 }
+
+// RevokeProfile revokes the guest account connection.
+// This endpoint requires the guest_read OAuth scope.
+func (c *Client) RevokeProfile(ctx context.Context, accessToken string) error {
+	if accessToken == "" {
+		return fmt.Errorf("access token is required")
+	}
+
+	httpReq, err := c.NewRequest(http.MethodPost, "link/profile/revoke.json", nil, WithBearerToken(accessToken))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if _, err = c.Do(ctx, httpReq, nil); err != nil {
+		return err
+	}
+	return nil
+}
