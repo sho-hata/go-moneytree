@@ -113,6 +113,8 @@ type AccountGroups struct {
 //	for _, ag := range response.AccountGroups {
 //		fmt.Printf("Account Group: %d, Status: %s\n", ag.AccountGroup, ag.AggregationStatus)
 //	}
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-profile-account-groups
 func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*AccountGroups, error) {
 	if accessToken == "" {
 		return nil, fmt.Errorf("access token is required")
@@ -149,12 +151,54 @@ func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*Acc
 //	if err != nil {
 //		log.Fatal(err)
 //	}
+//
+// Reference: https://docs.link.getmoneytree.com/reference/post-link-profile-refresh
 func (c *Client) RefreshProfile(ctx context.Context, accessToken string) error {
 	if accessToken == "" {
 		return fmt.Errorf("access token is required")
 	}
 
 	httpReq, err := c.NewRequest(http.MethodPost, "link/profile/refresh.json", nil, WithBearerToken(accessToken))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if _, err = c.Do(ctx, httpReq, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RefreshAccountGroup requests a refresh of data for a specific account group.
+// This endpoint requires the request_refresh OAuth scope.
+//
+// This API requests Moneytree to update data for the specified account group. When the request is accepted,
+// Moneytree starts a job to access the registered financial service using stored authentication credentials
+// or access/refresh tokens to retrieve updated information.
+//
+// This API is useful for business use cases where you want to synchronize specific account groups
+// at specific times, rather than synchronizing all account groups at once.
+//
+// Note: Even if 202 is returned, some financial services may have update restrictions.
+// Refer to the Financial Institution List API for details on restricted financial services
+// and their update interval conditions.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	err := client.RefreshAccountGroup(ctx, accessToken, 12345)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+// Reference: https://docs.link.getmoneytree.com/reference/post-link-account-group-refresh
+func (c *Client) RefreshAccountGroup(ctx context.Context, accessToken string, accountGroup int64) error {
+	if accessToken == "" {
+		return fmt.Errorf("access token is required")
+	}
+
+	urlPath := fmt.Sprintf("link/account_groups/%d/refresh.json", accountGroup)
+	httpReq, err := c.NewRequest(http.MethodPost, urlPath, nil, WithBearerToken(accessToken))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

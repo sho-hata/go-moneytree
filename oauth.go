@@ -39,6 +39,9 @@ type RevokeTokenRequest struct {
 	Token string
 }
 
+// RetrieveToken retrieves an access token or refresh token.
+//
+// Reference: https://docs.link.getmoneytree.com/reference/post-oauth-token
 func (c *Client) RetrieveToken(ctx context.Context, req *RetrieveTokenRequest) (*OauthToken, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request cannot be nil")
@@ -63,6 +66,8 @@ func (c *Client) RetrieveToken(ctx context.Context, req *RetrieveTokenRequest) (
 // RevokeToken revokes an access token or refresh token.
 // According to the API documentation, this endpoint returns 200 OK even if the token
 // does not exist or has already been revoked.
+//
+// Reference: https://docs.link.getmoneytree.com/reference/post-oauth-revoke
 func (c *Client) RevokeToken(ctx context.Context, req *RevokeTokenRequest) error {
 	if req == nil {
 		return fmt.Errorf("request cannot be nil")
