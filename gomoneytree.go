@@ -12,6 +12,9 @@ import (
 	"strings"
 )
 
+// RequestOption configures a request.
+type RequestOption func(*http.Request)
+
 // Client is the main client for interacting with the Moneytree LINK API.
 type Client struct {
 	httpClient *http.Client
@@ -40,7 +43,7 @@ func NewClient(accountName string) (*Client, error) {
 // Relative URLs should always be specified without a preceding slash. If
 // specified, the value pointed to by body is JSON encoded and included as the
 // request body.
-func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body any) (*http.Request, error) {
+func (c *Client) NewRequest(method, urlStr string, body any, opts ...RequestOption) (*http.Request, error) {
 	if !strings.HasSuffix(c.config.BaseURL.Path, "/") {
 		return nil, fmt.Errorf("baseURL must have a trailing slash, but %q does not", c.config.BaseURL)
 	}
@@ -69,6 +72,39 @@ func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body any
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
+
+	for _, opt := range opts {
+		opt(req)
+	}
+
+	return req, nil
+}
+
+// NewFormRequest creates an API request. A relative URL can be provided in urlStr,
+// in which case it is resolved relative to the BaseURL of the Client.
+// Relative URLs should always be specified without a preceding slash.
+// Body is sent with Content-Type: application/x-www-form-urlencoded.
+func (c *Client) NewFormRequest(urlStr string, body io.Reader, opts ...RequestOption) (*http.Request, error) {
+	if !strings.HasSuffix(c.config.BaseURL.Path, "/") {
+		return nil, fmt.Errorf("baseURL must have a trailing slash, but %q does not", c.config.BaseURL)
+	}
+
+	u, err := c.config.BaseURL.Parse(urlStr)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	for _, opt := range opts {
+		opt(req)
+	}
+
 	return req, nil
 }
 
