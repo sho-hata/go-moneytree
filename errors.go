@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+var errNonNilContext = errors.New("context must be non-nil")
+
 // APIError represents an error returned by the Moneytree LINK API.
 type APIError struct {
 	StatusCode int `json:"-"`
