@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 // Profile represents the user profile information returned by the Moneytree LINK API.
@@ -57,4 +58,74 @@ func (c *Client) RevokeProfile(ctx context.Context, accessToken string) error {
 		return err
 	}
 	return nil
+}
+
+// AccountGroup represents an account group status returned by the Moneytree LINK API.
+// An account group is a collection of accounts that were registered together
+// through a single financial service registration.
+type AccountGroup struct {
+	// AggregationState represents the current data acquisition status.
+	// Possible values: "success", "running", "error".
+	AggregationState string `json:"aggregation_state"`
+	// AggregationStatus represents the current data acquisition status in more detail than AggregationState.
+	// For a list of possible values and their meanings, refer to the aggregation_status list guide.
+	AggregationStatus string `json:"aggregation_status"`
+	// LastAggregatedAt is the last time data was acquired.
+	LastAggregatedAt time.Time `json:"last_aggregated_at"`
+	// LastAggregatedSuccess is the last time data was successfully acquired.
+	// This value is null if data has never been successfully acquired.
+	LastAggregatedSuccess *time.Time `json:"last_aggregated_success"`
+	// ID is the account group ID.
+	// Deprecated: Use AccountGroup instead.
+	ID *int64 `json:"id,omitempty"`
+	// AccountGroup is the unique ID for the financial service registration group.
+	// This value corresponds to the account_group value in each account information API.
+	AccountGroup int64 `json:"account_group"`
+	// InstitutionEntityKey is the key that identifies the financial service.
+	// The name that can be displayed to customers can be obtained via the Financial Institution List API.
+	InstitutionEntityKey string `json:"institution_entity_key"`
+}
+
+// AccountGroups represents the response from the account groups status endpoint.
+type AccountGroups struct {
+	// AccountGroups is a list of account groups registered by the guest user.
+	AccountGroups []AccountGroup `json:"account_groups"`
+}
+
+// GetAccountGroups retrieves the status of all account groups for the guest user.
+// This endpoint requires the accounts_read OAuth scope.
+//
+// Account groups represent collections of accounts that were registered together
+// through a single financial service registration. For example, a single bank registration
+// may provide access to checking accounts, savings accounts, and card loans.
+//
+// This API can be used to check the processing status and completion of synchronization requests.
+// If last_aggregated_at is null, it indicates that the financial service registration
+// has not been completed (either still in progress or failed during initial registration).
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetAccountGroups(ctx, accessToken)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, ag := range response.AccountGroups {
+//		fmt.Printf("Account Group: %d, Status: %s\n", ag.AccountGroup, ag.AggregationStatus)
+//	}
+func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*AccountGroups, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+
+	httpReq, err := c.NewRequest(http.MethodGet, "link/profile/account_groups.json", nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res AccountGroups
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
 }
