@@ -1,7 +1,9 @@
 package moneytree
 
+import "net/url"
+
 type Config struct {
-	BaseURL      string
+	BaseURL      *url.URL
 	ClientID     string
 	ClientSecret string
 }

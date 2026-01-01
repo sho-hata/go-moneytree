@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -61,14 +62,17 @@ func TestClient_GetAccessToken(t *testing.T) {
 		}))
 		defer server.Close()
 
-		config := &Config{
-			BaseURL:      server.URL,
-			ClientID:     "test-client-id",
-			ClientSecret: "test-client-secret",
-		}
-		client, err := NewClient(config, nil)
+		baseURL, err := url.Parse(server.URL)
 		if err != nil {
-			t.Fatalf("failed to create client: %v", err)
+			t.Fatalf("failed to parse server URL: %v", err)
+		}
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL:      baseURL,
+				ClientID:     "test-client-id",
+				ClientSecret: "test-client-secret",
+			},
 		}
 
 		req := &GetAccessTokenRequest{
@@ -101,14 +105,17 @@ func TestClient_GetAccessToken(t *testing.T) {
 	t.Run("エラーケース: リクエストがnilの場合、エラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		config := &Config{
-			BaseURL:      "https://example.com",
-			ClientID:     "test-client-id",
-			ClientSecret: "test-client-secret",
-		}
-		client, err := NewClient(config, nil)
+		baseURL, err := url.Parse("https://example.com")
 		if err != nil {
-			t.Fatalf("failed to create client: %v", err)
+			t.Fatalf("failed to parse URL: %v", err)
+		}
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL:      baseURL,
+				ClientID:     "test-client-id",
+				ClientSecret: "test-client-secret",
+			},
 		}
 
 		_, err = client.GetAccessToken(context.Background(), nil)
@@ -123,14 +130,17 @@ func TestClient_GetAccessToken(t *testing.T) {
 	t.Run("エラーケース: codeが空の場合、エラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		config := &Config{
-			BaseURL:      "https://example.com",
-			ClientID:     "test-client-id",
-			ClientSecret: "test-client-secret",
-		}
-		client, err := NewClient(config, nil)
+		baseURL, err := url.Parse("https://example.com")
 		if err != nil {
-			t.Fatalf("failed to create client: %v", err)
+			t.Fatalf("failed to parse URL: %v", err)
+		}
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL:      baseURL,
+				ClientID:     "test-client-id",
+				ClientSecret: "test-client-secret",
+			},
 		}
 
 		req := &GetAccessTokenRequest{
@@ -150,14 +160,17 @@ func TestClient_GetAccessToken(t *testing.T) {
 	t.Run("エラーケース: redirect_uriが空の場合、エラーを返す", func(t *testing.T) {
 		t.Parallel()
 
-		config := &Config{
-			BaseURL:      "https://example.com",
-			ClientID:     "test-client-id",
-			ClientSecret: "test-client-secret",
-		}
-		client, err := NewClient(config, nil)
+		baseURL, err := url.Parse("https://example.com")
 		if err != nil {
-			t.Fatalf("failed to create client: %v", err)
+			t.Fatalf("failed to parse URL: %v", err)
+		}
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL:      baseURL,
+				ClientID:     "test-client-id",
+				ClientSecret: "test-client-secret",
+			},
 		}
 
 		req := &GetAccessTokenRequest{
@@ -187,14 +200,17 @@ func TestClient_GetAccessToken(t *testing.T) {
 		}))
 		defer server.Close()
 
-		config := &Config{
-			BaseURL:      server.URL,
-			ClientID:     "test-client-id",
-			ClientSecret: "test-client-secret",
-		}
-		client, err := NewClient(config, nil)
+		baseURL, err := url.Parse(server.URL)
 		if err != nil {
-			t.Fatalf("failed to create client: %v", err)
+			t.Fatalf("failed to parse server URL: %v", err)
+		}
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL:      baseURL,
+				ClientID:     "test-client-id",
+				ClientSecret: "test-client-secret",
+			},
 		}
 
 		req := &GetAccessTokenRequest{
@@ -238,14 +254,17 @@ func TestClient_GetAccessToken(t *testing.T) {
 		}))
 		defer server.Close()
 
-		config := &Config{
-			BaseURL:      server.URL,
-			ClientID:     "test-client-id",
-			ClientSecret: "test-client-secret",
-		}
-		client, err := NewClient(config, nil)
+		baseURL, err := url.Parse(server.URL)
 		if err != nil {
-			t.Fatalf("failed to create client: %v", err)
+			t.Fatalf("failed to parse server URL: %v", err)
+		}
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL:      baseURL,
+				ClientID:     "test-client-id",
+				ClientSecret: "test-client-secret",
+			},
 		}
 
 		req := &GetAccessTokenRequest{
