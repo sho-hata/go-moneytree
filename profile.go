@@ -129,3 +129,38 @@ func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*Acc
 	}
 	return &res, nil
 }
+
+// RefreshProfile requests a refresh of financial institution data.
+// This endpoint requires the request_refresh OAuth scope.
+//
+// This API requests Moneytree to update financial institution data. When the request is accepted,
+// Moneytree starts a job to access registered financial services using stored authentication credentials
+// or access/refresh tokens to retrieve updated information.
+//
+// Note: This API is limited to 4 requests per guest per day (resets at 00:00 JST).
+// Even if 202 is returned, some financial services may have update restrictions.
+// Refer to the Financial Institution List API for details on restricted financial services
+// and their update interval conditions.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	err := client.RefreshProfile(ctx, accessToken)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+func (c *Client) RefreshProfile(ctx context.Context, accessToken string) error {
+	if accessToken == "" {
+		return fmt.Errorf("access token is required")
+	}
+
+	httpReq, err := c.NewRequest(http.MethodPost, "link/profile/refresh.json", nil, WithBearerToken(accessToken))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if _, err = c.Do(ctx, httpReq, nil); err != nil {
+		return err
+	}
+	return nil
+}
