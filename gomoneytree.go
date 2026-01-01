@@ -158,6 +158,14 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Respon
 	return resp, err
 }
 
+// WithBearerToken returns a RequestOption that sets the Authorization header
+// with the provided bearer token.
+func WithBearerToken(token string) RequestOption {
+	return func(req *http.Request) {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	}
+}
+
 // sanitizeURL redacts sensitive parameters from the URL which may be
 // exposed to the user.
 func sanitizeURL(uri *url.URL) *url.URL {

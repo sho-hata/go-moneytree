@@ -1,0 +1,167 @@
+package moneytree
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+)
+
+func TestGetProfile(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: profile information is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		expectedProfile := Profile{
+			LocaleIdentifier: stringPtr("ja_JP"),
+			Email:            stringPtr("user@example.com"),
+			MoneytreeID:      stringPtr("1234567890"),
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/profile.json" {
+				t.Errorf("expected path /link/profile.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedProfile); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		profile, err := client.GetProfile(context.Background(), "test-access-token")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if profile == nil {
+			t.Fatal("expected profile, got nil")
+		}
+		if profile.LocaleIdentifier == nil || *profile.LocaleIdentifier != *expectedProfile.LocaleIdentifier {
+			t.Errorf("expected LocaleIdentifier %s, got %v", *expectedProfile.LocaleIdentifier, profile.LocaleIdentifier)
+		}
+		if profile.Email == nil || *profile.Email != *expectedProfile.Email {
+			t.Errorf("expected Email %s, got %v", *expectedProfile.Email, profile.Email)
+		}
+		if profile.MoneytreeID == nil || *profile.MoneytreeID != *expectedProfile.MoneytreeID {
+			t.Errorf("expected MoneytreeID %s, got %v", *expectedProfile.MoneytreeID, profile.MoneytreeID)
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetProfile(context.Background(), "")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token is invalid or expired."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetProfile(context.Background(), "invalid-token")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetProfile(nil, "test-token")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
+
+func stringPtr(s string) *string {
+	return &s
+}

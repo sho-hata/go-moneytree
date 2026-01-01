@@ -307,3 +307,33 @@ func TestNewFormRequest(t *testing.T) {
 		}
 	})
 }
+
+func TestWithBearerToken(t *testing.T) {
+	t.Parallel()
+
+	t.Run("正常系: Authorizationヘッダーが正しく設定される", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		token := "test-access-token"
+		req, err := client.NewRequest(http.MethodGet, "test/path", nil, WithBearerToken(token))
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		expectedAuthHeader := "Bearer test-access-token"
+		if req.Header.Get("Authorization") != expectedAuthHeader {
+			t.Errorf("expected Authorization header %s, got %s", expectedAuthHeader, req.Header.Get("Authorization"))
+		}
+	})
+}
