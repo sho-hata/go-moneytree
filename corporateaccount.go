@@ -361,3 +361,228 @@ func (c *Client) GetCorporateAccountBalances(ctx context.Context, accessToken st
 	}
 	return &res, nil
 }
+
+// CorporateAccountTransactionAttributes represents optional attributes for a corporate account transaction.
+// This object may be empty depending on the transaction.
+// The properties returned depend on the account's subtype.
+type CorporateAccountTransactionAttributes struct {
+	// FXBaseCurrency is the currency used for foreign currency credit card transactions.
+	FXBaseCurrency *string `json:"fx_base_currency,omitempty"`
+	// FXBaseAmount is the amount in local currency for foreign currency credit card transactions.
+	FXBaseAmount *float64 `json:"fx_base_amount,omitempty"`
+	// AuthorizationCode is the authorization code for debit card transactions.
+	// Usually a 6-digit number.
+	AuthorizationCode *string `json:"authorization_code,omitempty"`
+	// Balance is the balance after this transaction for bank accounts.
+	Balance *float64 `json:"balance,omitempty"`
+	// IsRevolving indicates if this statement is a revolving payment.
+	IsRevolving *bool `json:"is_revolving,omitempty"`
+	// IsBonus indicates if this statement is a bonus payment.
+	IsBonus *bool `json:"is_bonus,omitempty"`
+	// IsCashAdvance indicates if this statement was a cash advance
+	// (e.g., withdrawing cash using a credit card).
+	IsCashAdvance *bool `json:"is_cash_advance,omitempty"`
+	// InstallmentCount is the number of installment payments for this statement.
+	// May be "1" if installment payments were not used.
+	InstallmentCount *int `json:"installment_count,omitempty"`
+	// ExpenseType is the type of transaction.
+	// Deprecated: This field is deprecated.
+	// Possible values: 0 = Unknown (assumed private use), 1 = Private use, 2 = Business.
+	ExpenseType *int `json:"expense_type,omitempty"`
+	// PredictedExpenseType is the predicted type of transaction.
+	// Deprecated: This field is deprecated.
+	// Possible values: 0 = Unknown (assumed private use), 1 = Private use, 2 = Business.
+	PredictedExpenseType *int `json:"predicted_expense_type,omitempty"`
+	// DataSource indicates the data source.
+	// Deprecated: This field is deprecated.
+	DataSource *string `json:"data_source,omitempty"`
+	// TransactionType is the transaction type.
+	// Deprecated: This field always returns null.
+	TransactionType *string `json:"transaction_type,omitempty"`
+}
+
+// CorporateAccountTransaction represents a transaction record for a corporate account returned by the Moneytree LINK API.
+type CorporateAccountTransaction struct {
+	// ID is the transaction ID (unique across the entire system).
+	// For example, if the same financial institution account is registered twice
+	// with the same authentication information, different IDs will be assigned to each entity.
+	ID int64 `json:"id"`
+	// Amount is the transaction amount.
+	Amount float64 `json:"amount"`
+	// Date is the transaction date.
+	// Format: ISO 8601 date-time.
+	Date string `json:"date"`
+	// DescriptionGuest is the content of the transaction entered by the customer.
+	DescriptionGuest *string `json:"description_guest"`
+	// DescriptionPretty is the content of the transaction corrected by Moneytree.
+	DescriptionPretty *string `json:"description_pretty"`
+	// DescriptionRaw is the unedited transaction content (raw data).
+	// Regarding the details (summary field), there are digit restrictions depending on the bank API specifications.
+	// For details, please check the publicly available API specifications of each bank.
+	DescriptionRaw *string `json:"description_raw"`
+	// AccountID is the account ID.
+	AccountID int64 `json:"account_id"`
+	// CategoryID is the category ID of the transaction detail.
+	CategoryID int64 `json:"category_id"`
+	// Attributes contains optional attributes for the transaction.
+	// This object may be empty depending on the transaction.
+	// The properties returned depend on the account's subtype.
+	Attributes CorporateAccountTransactionAttributes `json:"attributes"`
+	// CategoryEntityKey is the entity key of the specified category in the transaction details.
+	// If it is a user-defined category, this value is null. Otherwise, it has a value.
+	CategoryEntityKey *string `json:"category_entity_key"`
+	// CreatedAt is the time registered with Moneytree.
+	// Format: ISO 8601 date-time.
+	CreatedAt string `json:"created_at"`
+	// UpdatedAt is the last updated time (updated by Moneytree or user changes, etc.).
+	// Format: ISO 8601 date-time.
+	UpdatedAt string `json:"updated_at"`
+}
+
+// CorporateAccountTransactions represents the response from the corporate account transactions endpoint.
+type CorporateAccountTransactions struct {
+	// Transactions is a list of transaction records for the account.
+	Transactions []CorporateAccountTransaction `json:"transactions"`
+}
+
+// GetCorporateAccountTransactionsOption configures options for the GetCorporateAccountTransactions API call.
+type GetCorporateAccountTransactionsOption func(*getCorporateTransactionsOptions)
+
+type getCorporateTransactionsOptions struct {
+	paginationOptions
+	SortKey *string
+	SortBy  *string
+	Since   *string
+}
+
+// WithPageForCorporateTransactions specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForCorporateTransactions(page int) GetCorporateAccountTransactionsOption {
+	return func(opts *getCorporateTransactionsOptions) {
+		opts.Page = &page
+	}
+}
+
+// WithPerPageForCorporateTransactions specifies the number of items per page.
+// The default value is 500. Valid range is 1 to 500.
+func WithPerPageForCorporateTransactions(perPage int) GetCorporateAccountTransactionsOption {
+	return func(opts *getCorporateTransactionsOptions) {
+		opts.PerPage = &perPage
+	}
+}
+
+// WithSortKeyForCorporateTransactions specifies the sort key for transaction details.
+// If not provided, the database's id key is used by default.
+// Using sort_key may affect response time, so it is recommended to use it only when necessary.
+// If "date" is specified as the sort key, the database sorts by the transaction date
+// (which is the actual transaction date, not the date Moneytree obtained it).
+// The default value is "id".
+func WithSortKeyForCorporateTransactions(sortKey string) GetCorporateAccountTransactionsOption {
+	return func(opts *getCorporateTransactionsOptions) {
+		opts.SortKey = &sortKey
+	}
+}
+
+// WithSortByForCorporateTransactions specifies the sort order.
+// Possible values: "asc" (ascending, default), "desc" (descending).
+// The default value is "asc".
+func WithSortByForCorporateTransactions(sortBy string) GetCorporateAccountTransactionsOption {
+	return func(opts *getCorporateTransactionsOptions) {
+		opts.SortBy = &sortBy
+	}
+}
+
+// WithSinceForCorporateTransactions specifies a date to retrieve only records updated after this time (updated_at).
+// This is useful for incremental updates to avoid fetching all transactions every time.
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForCorporateTransactions(since string) GetCorporateAccountTransactionsOption {
+	return func(opts *getCorporateTransactionsOptions) {
+		opts.Since = &since
+	}
+}
+
+// GetCorporateAccountTransactions retrieves the transaction records for a specific corporate account.
+// This endpoint requires the transactions_read OAuth scope.
+//
+// This API returns transaction records for the specified account.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetCorporateAccountTransactions(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, transaction := range response.Transactions {
+//		fmt.Printf("Date: %s, Amount: %v, Description: %s\n", transaction.Date, transaction.Amount, *transaction.DescriptionPretty)
+//	}
+//
+// Example with pagination and sorting:
+//
+//	response, err := client.GetCorporateAccountTransactions(ctx, accessToken, "account_key_123",
+//		moneytree.WithPageForCorporateTransactions(1),
+//		moneytree.WithPerPageForCorporateTransactions(100),
+//		moneytree.WithSortKeyForCorporateTransactions("date"),
+//		moneytree.WithSortByForCorporateTransactions("desc"),
+//	)
+//
+// Example with since parameter:
+//
+//	response, err := client.GetCorporateAccountTransactions(ctx, accessToken, "account_key_123",
+//		moneytree.WithSinceForCorporateTransactions("2023-01-01"),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-corporate-accounts-transactions
+func (c *Client) GetCorporateAccountTransactions(ctx context.Context, accessToken string, accountID string, opts ...GetCorporateAccountTransactionsOption) (*CorporateAccountTransactions, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	options := &getCorporateTransactionsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
+	if options.SortBy != nil {
+		if *options.SortBy != "asc" && *options.SortBy != "desc" {
+			return nil, fmt.Errorf("sort_by must be 'asc' or 'desc', got: %s", *options.SortBy)
+		}
+	}
+
+	urlPath := fmt.Sprintf("link/corporate/accounts/%s/transactions.json", url.PathEscape(accountID))
+	queryParams := url.Values{}
+	applyPaginationParams(queryParams, &options.paginationOptions)
+	if options.SortKey != nil {
+		queryParams.Set("sort_key", *options.SortKey)
+	}
+	if options.SortBy != nil {
+		queryParams.Set("sort_by", *options.SortBy)
+	}
+	if options.Since != nil {
+		queryParams.Set("since", *options.Since)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res CorporateAccountTransactions
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
