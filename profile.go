@@ -30,7 +30,7 @@ func (c *Client) GetProfile(ctx context.Context, accessToken string) (*Profile, 
 		return nil, fmt.Errorf("access token is required")
 	}
 
-	httpReq, err := c.NewRequest(http.MethodGet, "link/profile.json", nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, "link/profile.json", nil, WithBearerToken(accessToken))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -49,7 +49,7 @@ func (c *Client) RevokeProfile(ctx context.Context, accessToken string) error {
 		return fmt.Errorf("access token is required")
 	}
 
-	httpReq, err := c.NewRequest(http.MethodPost, "link/profile/revoke.json", nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, "link/profile/revoke.json", nil, WithBearerToken(accessToken))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -120,7 +120,7 @@ func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*Acc
 		return nil, fmt.Errorf("access token is required")
 	}
 
-	httpReq, err := c.NewRequest(http.MethodGet, "link/profile/account_groups.json", nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, "link/profile/account_groups.json", nil, WithBearerToken(accessToken))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -158,7 +158,7 @@ func (c *Client) RefreshProfile(ctx context.Context, accessToken string) error {
 		return fmt.Errorf("access token is required")
 	}
 
-	httpReq, err := c.NewRequest(http.MethodPost, "link/profile/refresh.json", nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, "link/profile/refresh.json", nil, WithBearerToken(accessToken))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -198,7 +198,7 @@ func (c *Client) RefreshAccountGroup(ctx context.Context, accessToken string, ac
 	}
 
 	urlPath := fmt.Sprintf("link/account_groups/%d/refresh.json", accountGroup)
-	httpReq, err := c.NewRequest(http.MethodPost, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, urlPath, nil, WithBearerToken(accessToken))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

@@ -43,7 +43,10 @@ func NewClient(accountName string) (*Client, error) {
 // Relative URLs should always be specified without a preceding slash. If
 // specified, the value pointed to by body is JSON encoded and included as the
 // request body.
-func (c *Client) NewRequest(method, urlStr string, body any, opts ...RequestOption) (*http.Request, error) {
+func (c *Client) NewRequest(ctx context.Context, method, urlStr string, body any, opts ...RequestOption) (*http.Request, error) {
+	if ctx == nil {
+		return nil, errNonNilContext
+	}
 	if !strings.HasSuffix(c.config.BaseURL.Path, "/") {
 		return nil, fmt.Errorf("baseURL must have a trailing slash, but %q does not", c.config.BaseURL)
 	}
@@ -64,7 +67,7 @@ func (c *Client) NewRequest(method, urlStr string, body any, opts ...RequestOpti
 		}
 	}
 
-	req, err := http.NewRequest(method, u.String(), buf)
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +87,10 @@ func (c *Client) NewRequest(method, urlStr string, body any, opts ...RequestOpti
 // in which case it is resolved relative to the BaseURL of the Client.
 // Relative URLs should always be specified without a preceding slash.
 // Body is sent with Content-Type: application/x-www-form-urlencoded.
-func (c *Client) NewFormRequest(urlStr string, body io.Reader, opts ...RequestOption) (*http.Request, error) {
+func (c *Client) NewFormRequest(ctx context.Context, urlStr string, body io.Reader, opts ...RequestOption) (*http.Request, error) {
+	if ctx == nil {
+		return nil, errNonNilContext
+	}
 	if !strings.HasSuffix(c.config.BaseURL.Path, "/") {
 		return nil, fmt.Errorf("baseURL must have a trailing slash, but %q does not", c.config.BaseURL)
 	}
@@ -94,7 +100,7 @@ func (c *Client) NewFormRequest(urlStr string, body io.Reader, opts ...RequestOp
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, u.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -113,14 +119,15 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Respon
 		return nil, errNonNilContext
 	}
 
-	req = req.WithContext(ctx)
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		// If we got an error, and the context has been canceled,
 		// the context's error is probably more useful.
 		select {
 		case <-ctx.Done():
+			if resp != nil && resp.Body != nil {
+				_ = resp.Body.Close()
+			}
 			return resp, ctx.Err()
 		default:
 		}
@@ -130,13 +137,23 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Respon
 		if errors.As(err, &e) {
 			if url, err := url.Parse(e.URL); err == nil {
 				e.URL = sanitizeURL(url).String()
+				if resp != nil && resp.Body != nil {
+					_ = resp.Body.Close()
+				}
 				return resp, e
 			}
 		}
 
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
 		return resp, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
+	}()
 
 	if err := checkResponseError(resp); err != nil {
 		return resp, err

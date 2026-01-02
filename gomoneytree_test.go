@@ -2,6 +2,7 @@ package moneytree
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -51,7 +52,7 @@ func TestNewRequest(t *testing.T) {
 			"key": "value",
 		}
 
-		req, err := client.NewRequest(http.MethodPost, "test/path", body)
+		req, err := client.NewRequest(context.Background(), http.MethodPost, "test/path", body)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -95,7 +96,7 @@ func TestNewRequest(t *testing.T) {
 			},
 		}
 
-		req, err := client.NewRequest(http.MethodGet, "test/path", nil)
+		req, err := client.NewRequest(context.Background(), http.MethodGet, "test/path", nil)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -131,7 +132,7 @@ func TestNewRequest(t *testing.T) {
 		customHeader := "Custom-Header"
 		customValue := "custom-value"
 
-		req, err := client.NewRequest(http.MethodPost, "test/path", nil, func(r *http.Request) {
+		req, err := client.NewRequest(context.Background(), http.MethodPost, "test/path", nil, func(r *http.Request) {
 			r.Header.Set(customHeader, customValue)
 		})
 		if err != nil {
@@ -157,7 +158,7 @@ func TestNewRequest(t *testing.T) {
 			},
 		}
 
-		_, err = client.NewRequest(http.MethodPost, "test/path", nil)
+		_, err = client.NewRequest(context.Background(), http.MethodPost, "test/path", nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -181,7 +182,7 @@ func TestNewRequest(t *testing.T) {
 		}
 
 		// Specify invalid URL path
-		_, err = client.NewRequest(http.MethodPost, "://invalid", nil)
+		_, err = client.NewRequest(context.Background(), http.MethodPost, "://invalid", nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -206,7 +207,7 @@ func TestNewFormRequest(t *testing.T) {
 		}
 
 		body := strings.NewReader("key=value&foo=bar")
-		req, err := client.NewFormRequest("test/path", body)
+		req, err := client.NewFormRequest(context.Background(), "test/path", body)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -244,7 +245,7 @@ func TestNewFormRequest(t *testing.T) {
 		customValue := "custom-value"
 
 		body := strings.NewReader("key=value")
-		req, err := client.NewFormRequest("test/path", body, func(r *http.Request) {
+		req, err := client.NewFormRequest(context.Background(), "test/path", body, func(r *http.Request) {
 			r.Header.Set(customHeader, customValue)
 		})
 		if err != nil {
@@ -276,7 +277,7 @@ func TestNewFormRequest(t *testing.T) {
 		}
 
 		body := strings.NewReader("key=value")
-		_, err = client.NewFormRequest("test/path", body)
+		_, err = client.NewFormRequest(context.Background(), "test/path", body)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -301,7 +302,7 @@ func TestNewFormRequest(t *testing.T) {
 
 		body := strings.NewReader("key=value")
 		// Specify invalid URL path
-		_, err = client.NewFormRequest("://invalid", body)
+		_, err = client.NewFormRequest(context.Background(), "://invalid", body)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -326,7 +327,7 @@ func TestWithBearerToken(t *testing.T) {
 		}
 
 		token := "test-access-token"
-		req, err := client.NewRequest(http.MethodGet, "test/path", nil, WithBearerToken(token))
+		req, err := client.NewRequest(context.Background(), http.MethodGet, "test/path", nil, WithBearerToken(token))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}

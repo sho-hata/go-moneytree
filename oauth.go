@@ -51,7 +51,7 @@ func (c *Client) RetrieveToken(ctx context.Context, req *RetrieveTokenRequest) (
 		ClientID:             c.config.ClientID,
 		ClientSecret:         c.config.ClientSecret,
 	}
-	httpReq, err := c.NewRequest(http.MethodPost, "oauth/token", body)
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, "oauth/token", body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -82,7 +82,7 @@ func (c *Client) RevokeToken(ctx context.Context, req *RevokeTokenRequest) error
 	form.Set("client_secret", c.config.ClientSecret)
 
 	body := strings.NewReader(form.Encode())
-	httpReq, err := c.NewFormRequest("oauth/revoke", body)
+	httpReq, err := c.NewFormRequest(ctx, "oauth/revoke", body)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

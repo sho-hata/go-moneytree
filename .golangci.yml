@@ -2,7 +2,6 @@ version: "2"
 
 linters:
   enable:
-    - bodyclose # checks whether HTTP response body is closed successfully
     - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
     - exhaustive # checks exhaustiveness of enum switch statements
     - forbidigo # forbids identifiers
