@@ -19,9 +19,9 @@ func TestGetProfile(t *testing.T) {
 		t.Parallel()
 
 		expectedProfile := Profile{
-			LocaleIdentifier: stringPtr("ja_JP"),
-			Email:            stringPtr("user@example.com"),
-			MoneytreeID:      stringPtr("1234567890"),
+			LocaleIdentifier: "ja_JP",
+			Email:            "user@example.com",
+			MoneytreeID:      "1234567890",
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,14 +64,14 @@ func TestGetProfile(t *testing.T) {
 		if profile == nil {
 			t.Fatal("expected profile, got nil")
 		}
-		if profile.LocaleIdentifier == nil || *profile.LocaleIdentifier != *expectedProfile.LocaleIdentifier {
-			t.Errorf("expected LocaleIdentifier %s, got %v", *expectedProfile.LocaleIdentifier, profile.LocaleIdentifier)
+		if profile.LocaleIdentifier != expectedProfile.LocaleIdentifier {
+			t.Errorf("expected LocaleIdentifier %s, got %s", expectedProfile.LocaleIdentifier, profile.LocaleIdentifier)
 		}
-		if profile.Email == nil || *profile.Email != *expectedProfile.Email {
-			t.Errorf("expected Email %s, got %v", *expectedProfile.Email, profile.Email)
+		if profile.Email != expectedProfile.Email {
+			t.Errorf("expected Email %s, got %s", expectedProfile.Email, profile.Email)
 		}
-		if profile.MoneytreeID == nil || *profile.MoneytreeID != *expectedProfile.MoneytreeID {
-			t.Errorf("expected MoneytreeID %s, got %v", *expectedProfile.MoneytreeID, profile.MoneytreeID)
+		if profile.MoneytreeID != expectedProfile.MoneytreeID {
+			t.Errorf("expected MoneytreeID %s, got %s", expectedProfile.MoneytreeID, profile.MoneytreeID)
 		}
 	})
 

@@ -12,14 +12,14 @@ type Profile struct {
 	// The format is [language]_[region], where _[region] is optional.
 	// Language is a 2-digit ISO639 code representing the language.
 	// Examples: "ja_JP" (Japanese, residing in Japan), "en_US" (English, residing in America), "ja_US" (Japanese, residing in America).
-	LocaleIdentifier *string `json:"locale_identifier,omitempty"`
+	LocaleIdentifier string `json:"locale_identifier,omitempty"`
 	// Email is the customer's current email address.
 	// Note: Since it may be changed by the customer, it should not be used as a unique identifier.
 	// Also, if a guest user changes their email address, it may take several minutes for the new data to be reflected.
-	Email *string `json:"email,omitempty"`
+	Email string `json:"email,omitempty"`
 	// MoneytreeID is a value that is unique within the system and cannot identify the customer.
 	// Used as a unique identifier within the system.
-	MoneytreeID *string `json:"moneytree_id,omitempty"`
+	MoneytreeID string `json:"moneytree_id,omitempty"`
 }
 
 // GetProfile retrieves the user profile information.
