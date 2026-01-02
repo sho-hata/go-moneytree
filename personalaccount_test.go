@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -516,4 +517,406 @@ func TestGetPersonalAccounts(t *testing.T) {
 
 func float64Ptr(f float64) *float64 {
 	return &f
+}
+
+func TestGetPersonalAccountBalances(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: balances list is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+		id1 := int64(1)
+		id2 := int64(2)
+		accountIDValue := int64(123)
+		balance1 := 100000.50
+		balance2 := 105000.75
+		balanceInBase1 := 100000.50
+		balanceInBase2 := 105000.75
+		date1 := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		date2 := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+
+		expectedResponse := PersonalAccountBalances{
+			AccountBalances: []PersonalAccountBalance{
+				{
+					ID:            id1,
+					AccountID:     accountIDValue,
+					Date:          date1,
+					Balance:       balance1,
+					BalanceInBase: balanceInBase1,
+				},
+				{
+					ID:            id2,
+					AccountID:     accountIDValue,
+					Date:          date2,
+					Balance:       balance2,
+					BalanceInBase: balanceInBase2,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			expectedPath := fmt.Sprintf("/link/accounts/%s/balances.json", accountID)
+			if r.URL.Path != expectedPath {
+				t.Errorf("expected path %s, got %s", expectedPath, r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.AccountBalances) != 2 {
+			t.Fatalf("expected 2 balances, got %d", len(response.AccountBalances))
+		}
+
+		bal1 := response.AccountBalances[0]
+		if bal1.ID != expectedResponse.AccountBalances[0].ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.AccountBalances[0].ID, bal1.ID)
+		}
+		if bal1.AccountID != expectedResponse.AccountBalances[0].AccountID {
+			t.Errorf("expected AccountID %d, got %d", expectedResponse.AccountBalances[0].AccountID, bal1.AccountID)
+		}
+		if bal1.Balance != expectedResponse.AccountBalances[0].Balance {
+			t.Errorf("expected Balance %v, got %v", expectedResponse.AccountBalances[0].Balance, bal1.Balance)
+		}
+		if bal1.BalanceInBase != expectedResponse.AccountBalances[0].BalanceInBase {
+			t.Errorf("expected BalanceInBase %v, got %v", expectedResponse.AccountBalances[0].BalanceInBase, bal1.BalanceInBase)
+		}
+		if !bal1.Date.Equal(expectedResponse.AccountBalances[0].Date) {
+			t.Errorf("expected Date %v, got %v", expectedResponse.AccountBalances[0].Date, bal1.Date)
+		}
+
+		bal2 := response.AccountBalances[1]
+		if bal2.Balance != expectedResponse.AccountBalances[1].Balance {
+			t.Errorf("expected Balance %v, got %v", expectedResponse.AccountBalances[1].Balance, bal2.Balance)
+		}
+		if bal2.BalanceInBase != expectedResponse.AccountBalances[1].BalanceInBase {
+			t.Errorf("expected BalanceInBase %v, got %v", expectedResponse.AccountBalances[1].BalanceInBase, bal2.BalanceInBase)
+		}
+		if !bal2.Date.Equal(expectedResponse.AccountBalances[1].Date) {
+			t.Errorf("expected Date %v, got %v", expectedResponse.AccountBalances[1].Date, bal2.Date)
+		}
+	})
+
+	t.Run("success case: balances list with since parameter", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+		sinceTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		id := int64(1)
+		accountIDValue := int64(123)
+		balance := 100000.50
+		balanceInBase := 100000.50
+		date := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+
+		expectedResponse := PersonalAccountBalances{
+			AccountBalances: []PersonalAccountBalance{
+				{
+					ID:            id,
+					AccountID:     accountIDValue,
+					Date:          date,
+					Balance:       balance,
+					BalanceInBase: balanceInBase,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedSince := sinceTime.Format("2006-01-02")
+			actualSince := r.URL.Query().Get("since")
+			if actualSince != expectedSince {
+				t.Errorf("expected since parameter %s, got %s", expectedSince, actualSince)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID, WithSinceForBalances(sinceTime))
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.AccountBalances) != 1 {
+			t.Fatalf("expected 1 balance, got %d", len(response.AccountBalances))
+		}
+	})
+
+	t.Run("success case: balances list with page and per_page parameters", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+		id := int64(1)
+		accountIDValue := int64(123)
+		balance := 100000.50
+		balanceInBase := 100000.50
+		date := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+
+		expectedResponse := PersonalAccountBalances{
+			AccountBalances: []PersonalAccountBalance{
+				{
+					ID:            id,
+					AccountID:     accountIDValue,
+					Date:          date,
+					Balance:       balance,
+					BalanceInBase: balanceInBase,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedPage := "2"
+			actualPage := r.URL.Query().Get("page")
+			if actualPage != expectedPage {
+				t.Errorf("expected page parameter %s, got %s", expectedPage, actualPage)
+			}
+
+			expectedPerPage := "50"
+			actualPerPage := r.URL.Query().Get("per_page")
+			if actualPerPage != expectedPerPage {
+				t.Errorf("expected per_page parameter %s, got %s", expectedPerPage, actualPerPage)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID,
+			WithPageForBalances(2),
+			WithPerPageForBalances(50),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.AccountBalances) != 1 {
+			t.Fatalf("expected 1 balance, got %d", len(response.AccountBalances))
+		}
+	})
+
+	t.Run("success case: empty balances list", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		expectedResponse := PersonalAccountBalances{
+			AccountBalances: []PersonalAccountBalance{},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.AccountBalances) != 0 {
+			t.Fatalf("expected 0 balances, got %d", len(response.AccountBalances))
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPersonalAccountBalances(context.Background(), "", "account_key_123")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPersonalAccountBalances(context.Background(), "test-token", "")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "account ID is required") {
+			t.Errorf("expected error about account ID, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token is invalid or expired."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPersonalAccountBalances(context.Background(), "invalid-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetPersonalAccountBalances(nil, "test-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
 }
