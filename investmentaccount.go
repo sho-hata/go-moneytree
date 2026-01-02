@@ -168,3 +168,144 @@ func (c *Client) GetInvestmentAccounts(ctx context.Context, accessToken string, 
 	return &res, nil
 }
 
+// InvestmentPosition represents a position record for an investment account returned by the Moneytree LINK API.
+// Unlike transaction details, position details represent what assets the customer currently holds at a point in time.
+// Positions change over time as market values fluctuate, so this API returns the most recently updated position details
+// that Moneytree has confirmed, rather than historical records.
+type InvestmentPosition struct {
+	// ID is the unique identifier for the position record.
+	// A new identifier is returned from the API each time the position is updated.
+	ID int64 `json:"id"`
+	// Date is the date associated with the position.
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	Date string `json:"date"`
+	// AssetClass is the classification of investment assets.
+	// Possible values: "stock", "investment_trust", "bond", "cash", "commodity", "alternative", "other", "unknown".
+	// Values not present in this enumeration may be added without warning.
+	AssetClass string `json:"asset_class"`
+	// AssetSubclass is a further classification of investment assets.
+	AssetSubclass *string `json:"asset_subclass"`
+	// TickerCode is the alphanumeric asset code for stocks being invested in.
+	// Applicable only to stock investment accounts.
+	TickerCode *string `json:"ticker_code"`
+	// Ticker is the alphanumeric asset code for stocks being invested in.
+	// Deprecated: Use TickerCode instead.
+	Ticker *string `json:"ticker"`
+	// NameRaw is the unformatted name assigned to the position.
+	NameRaw *string `json:"name_raw"`
+	// NameClean is the formatted name assigned to the position.
+	NameClean *string `json:"name_clean"`
+	// Currency is the currency code (ISO 4217) for calculating the value of the position.
+	Currency string `json:"currency"`
+	// TaxType is the classification of taxes applied to the assets of the position.
+	// Possible values: "ippan", "tokutei", "NISA", "dc pension", "stock option", "unknown".
+	TaxType []string `json:"tax_type"`
+	// TaxSubType is detailed information on TaxType.
+	// Possible values: "ippan", "tsumitate", "junior", "growth_investment", "tsumitate_investment".
+	// It will be null if detailed information is not provided by the financial institution.
+	TaxSubType *string `json:"tax_sub_type"`
+	// MarketValue is the total currency value of the position evaluated at the updated_at timestamp.
+	MarketValue float64 `json:"market_value"`
+	// Value is the total currency value of the position evaluated at the updated_at timestamp.
+	// Deprecated: Use MarketValue instead.
+	Value float64 `json:"value"`
+	// AcquisitionValue is the total currency value of the position when it was created.
+	AcquisitionValue *float64 `json:"acquisition_value"`
+	// CostBasis is the total currency value of the position when it was created.
+	// Deprecated: Use AcquisitionValue instead.
+	CostBasis *float64 `json:"cost_basis"`
+	// Profit is the unrealized gain/loss (plus or minus) of the position,
+	// considering the difference between acquisition cost and market value.
+	Profit *float64 `json:"profit"`
+	// Quantity is the quantity of assets included in the position.
+	Quantity *float64 `json:"quantity"`
+	// CreatedAt is the time registered with Moneytree.
+	// Format: ISO 8601 date-time.
+	CreatedAt string `json:"created_at"`
+	// UpdatedAt is the last updated time (updated by Moneytree or user changes, etc.).
+	// Format: ISO 8601 date-time.
+	UpdatedAt string `json:"updated_at"`
+}
+
+// InvestmentPositions represents the response from the investment positions endpoint.
+type InvestmentPositions struct {
+	// Positions is a list of position records for the account.
+	Positions []InvestmentPosition `json:"positions"`
+}
+
+// GetInvestmentPositionsOption configures options for the GetInvestmentPositions API call.
+type GetInvestmentPositionsOption func(*getInvestmentPositionsOptions)
+
+type getInvestmentPositionsOptions struct {
+	Page *int
+}
+
+// WithPageForInvestmentPositions specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForInvestmentPositions(page int) GetInvestmentPositionsOption {
+	return func(opts *getInvestmentPositionsOptions) {
+		opts.Page = &page
+	}
+}
+
+// GetInvestmentPositions retrieves the position records for a specific investment account.
+// This endpoint requires the investment_transactions_read OAuth scope.
+//
+// Unlike transaction details, position details represent what assets the customer currently holds at a point in time.
+// Positions change over time as market values fluctuate, so this API returns the most recently updated position details
+// that Moneytree has confirmed, rather than historical records.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetInvestmentPositions(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, position := range response.Positions {
+//		fmt.Printf("Asset: %s, Market Value: %v, Quantity: %v\n",
+//			*position.NameClean, position.MarketValue, *position.Quantity)
+//	}
+//
+// Example with pagination:
+//
+//	response, err := client.GetInvestmentPositions(ctx, accessToken, "account_key_123",
+//		moneytree.WithPageForInvestmentPositions(1),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-investments-accounts-positions
+func (c *Client) GetInvestmentPositions(ctx context.Context, accessToken string, accountID string, opts ...GetInvestmentPositionsOption) (*InvestmentPositions, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	options := &getInvestmentPositionsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	urlPath := fmt.Sprintf("link/investments/accounts/%s/positions.json", url.PathEscape(accountID))
+	queryParams := url.Values{}
+	if options.Page != nil {
+		queryParams.Set("page", fmt.Sprintf("%d", *options.Page))
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res InvestmentPositions
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+

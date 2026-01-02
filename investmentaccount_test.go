@@ -28,52 +28,52 @@ func TestGetInvestmentAccounts(t *testing.T) {
 		expectedResponse := InvestmentAccounts{
 			Accounts: []InvestmentAccount{
 				{
-					ID:                      id1,
-					AccountKey:              "investment_account_key_1",
-					AccountGroup:            789,
-					AccountSubtype:          "brokerage",
-					AccountType:             "stock",
-					Currency:                "JPY",
-					InstitutionEntityKey:    "test_brokerage_1",
-					InstitutionID:           1,
-					InstitutionAccountName:  "証券口座",
+					ID:                       id1,
+					AccountKey:               "investment_account_key_1",
+					AccountGroup:             789,
+					AccountSubtype:           "brokerage",
+					AccountType:              "stock",
+					Currency:                 "JPY",
+					InstitutionEntityKey:     "test_brokerage_1",
+					InstitutionID:            1,
+					InstitutionAccountName:   "証券口座",
 					InstitutionAccountNumber: stringPtr("1234567"),
-					Nickname:                "証券口座",
-					BranchName:              stringPtr("本店"),
-					BranchCode:              stringPtr("001"),
-					AggregationState:        "success",
-					AggregationStatus:       "success",
-					LastAggregatedAt:        lastAggregatedAt,
-					LastAggregatedSuccess:   stringPtr(lastAggregatedAt),
-					CurrentBalance:          balance1,
-					CurrentBalanceInBase:    balance1,
+					Nickname:                 "証券口座",
+					BranchName:               stringPtr("本店"),
+					BranchCode:               stringPtr("001"),
+					AggregationState:         "success",
+					AggregationStatus:        "success",
+					LastAggregatedAt:         lastAggregatedAt,
+					LastAggregatedSuccess:    stringPtr(lastAggregatedAt),
+					CurrentBalance:           balance1,
+					CurrentBalanceInBase:     balance1,
 					CurrentBalanceDataSource: stringPtr("institution"),
-					CreatedAt:               createdAt,
-					UpdatedAt:               updatedAt,
+					CreatedAt:                createdAt,
+					UpdatedAt:                updatedAt,
 				},
 				{
-					ID:                      id2,
-					AccountKey:              "investment_account_key_2",
-					AccountGroup:            789,
-					AccountSubtype:          "defined_contribution_pension",
-					AccountType:             "pension",
-					Currency:                "JPY",
-					InstitutionEntityKey:    "test_pension_1",
-					InstitutionID:           2,
-					InstitutionAccountName:  "確定拠出年金",
+					ID:                       id2,
+					AccountKey:               "investment_account_key_2",
+					AccountGroup:             789,
+					AccountSubtype:           "defined_contribution_pension",
+					AccountType:              "pension",
+					Currency:                 "JPY",
+					InstitutionEntityKey:     "test_pension_1",
+					InstitutionID:            2,
+					InstitutionAccountName:   "確定拠出年金",
 					InstitutionAccountNumber: stringPtr("9876543"),
-					Nickname:                "確定拠出年金",
-					BranchName:              nil,
-					BranchCode:              nil,
-					AggregationState:        "success",
-					AggregationStatus:       "success",
-					LastAggregatedAt:        lastAggregatedAt,
-					LastAggregatedSuccess:   stringPtr(lastAggregatedAt),
-					CurrentBalance:          balance2,
-					CurrentBalanceInBase:    balance2,
+					Nickname:                 "確定拠出年金",
+					BranchName:               nil,
+					BranchCode:               nil,
+					AggregationState:         "success",
+					AggregationStatus:        "success",
+					LastAggregatedAt:         lastAggregatedAt,
+					LastAggregatedSuccess:    stringPtr(lastAggregatedAt),
+					CurrentBalance:           balance2,
+					CurrentBalanceInBase:     balance2,
 					CurrentBalanceDataSource: stringPtr("institution"),
-					CreatedAt:               createdAt,
-					UpdatedAt:               updatedAt,
+					CreatedAt:                createdAt,
+					UpdatedAt:                updatedAt,
 				},
 			},
 		}
@@ -174,28 +174,28 @@ func TestGetInvestmentAccounts(t *testing.T) {
 		expectedResponse := InvestmentAccounts{
 			Accounts: []InvestmentAccount{
 				{
-					ID:                      123,
-					AccountKey:              accountKey,
-					AccountGroup:            789,
-					AccountSubtype:          "brokerage",
-					AccountType:             "stock",
-					Currency:                "JPY",
-					InstitutionEntityKey:    "test_brokerage_1",
-					InstitutionID:           1,
-					InstitutionAccountName:  "証券口座",
+					ID:                       123,
+					AccountKey:               accountKey,
+					AccountGroup:             789,
+					AccountSubtype:           "brokerage",
+					AccountType:              "stock",
+					Currency:                 "JPY",
+					InstitutionEntityKey:     "test_brokerage_1",
+					InstitutionID:            1,
+					InstitutionAccountName:   "証券口座",
 					InstitutionAccountNumber: nil,
-					Nickname:                "証券口座",
-					BranchName:              nil,
-					BranchCode:              nil,
-					AggregationState:        "success",
-					AggregationStatus:       "success",
-					LastAggregatedAt:        lastAggregatedAt,
-					LastAggregatedSuccess:   nil,
-					CurrentBalance:          nil,
-					CurrentBalanceInBase:    nil,
+					Nickname:                 "証券口座",
+					BranchName:               nil,
+					BranchCode:               nil,
+					AggregationState:         "success",
+					AggregationStatus:        "success",
+					LastAggregatedAt:         lastAggregatedAt,
+					LastAggregatedSuccess:    nil,
+					CurrentBalance:           nil,
+					CurrentBalanceInBase:     nil,
 					CurrentBalanceDataSource: nil,
-					CreatedAt:               createdAt,
-					UpdatedAt:               updatedAt,
+					CreatedAt:                createdAt,
+					UpdatedAt:                updatedAt,
 				},
 			},
 		}
@@ -431,3 +431,420 @@ func TestGetInvestmentAccounts(t *testing.T) {
 	})
 }
 
+func TestGetInvestmentPositions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: positions list is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		id1 := int64(123)
+		id2 := int64(456)
+		marketValue1 := 1000000.50
+		marketValue2 := 500000.00
+		acquisitionValue1 := 950000.00
+		profit1 := 50000.50
+		quantity1 := 100.0
+		quantity2 := 50.0
+		tickerCode1 := "7203"
+		nameClean1 := "トヨタ自動車"
+		nameClean2 := "日本株式インデックス"
+		taxType1 := []string{"ippan"}
+		taxSubType1 := "ippan"
+		createdAt := "2023-01-01T00:00:00Z"
+		updatedAt := "2023-01-01T00:00:00Z"
+
+		expectedResponse := InvestmentPositions{
+			Positions: []InvestmentPosition{
+				{
+					ID:               id1,
+					Date:             "2023-01-01",
+					AssetClass:       "stock",
+					AssetSubclass:    stringPtr("common_stock"),
+					TickerCode:       &tickerCode1,
+					NameRaw:          stringPtr("トヨタ自動車株式会社"),
+					NameClean:        &nameClean1,
+					Currency:         "JPY",
+					TaxType:          taxType1,
+					TaxSubType:       &taxSubType1,
+					MarketValue:      marketValue1,
+					Value:            marketValue1,
+					AcquisitionValue: &acquisitionValue1,
+					CostBasis:        &acquisitionValue1,
+					Profit:           &profit1,
+					Quantity:         &quantity1,
+					CreatedAt:        createdAt,
+					UpdatedAt:        updatedAt,
+				},
+				{
+					ID:               id2,
+					Date:             "2023-01-01",
+					AssetClass:       "investment_trust",
+					AssetSubclass:    nil,
+					TickerCode:       nil,
+					NameRaw:          stringPtr("日本株式インデックスファンド"),
+					NameClean:        &nameClean2,
+					Currency:         "JPY",
+					TaxType:          []string{"NISA"},
+					TaxSubType:       stringPtr("tsumitate"),
+					MarketValue:      marketValue2,
+					Value:            marketValue2,
+					AcquisitionValue: nil,
+					CostBasis:        nil,
+					Profit:           nil,
+					Quantity:         &quantity2,
+					CreatedAt:        createdAt,
+					UpdatedAt:        updatedAt,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/investments/accounts/account_key_123/positions.json" {
+				t.Errorf("expected path /link/investments/accounts/account_key_123/positions.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Positions) != 2 {
+			t.Fatalf("expected 2 positions, got %d", len(response.Positions))
+		}
+
+		position1 := response.Positions[0]
+		if position1.ID != expectedResponse.Positions[0].ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.Positions[0].ID, position1.ID)
+		}
+		if position1.AssetClass != expectedResponse.Positions[0].AssetClass {
+			t.Errorf("expected AssetClass %s, got %s", expectedResponse.Positions[0].AssetClass, position1.AssetClass)
+		}
+		if position1.MarketValue != expectedResponse.Positions[0].MarketValue {
+			t.Errorf("expected MarketValue %f, got %f", expectedResponse.Positions[0].MarketValue, position1.MarketValue)
+		}
+		if position1.NameClean == nil || *position1.NameClean != *expectedResponse.Positions[0].NameClean {
+			t.Errorf("expected NameClean %s, got %v", *expectedResponse.Positions[0].NameClean, position1.NameClean)
+		}
+		if position1.TickerCode == nil || *position1.TickerCode != *expectedResponse.Positions[0].TickerCode {
+			t.Errorf("expected TickerCode %s, got %v", *expectedResponse.Positions[0].TickerCode, position1.TickerCode)
+		}
+		if position1.Quantity == nil || *position1.Quantity != *expectedResponse.Positions[0].Quantity {
+			t.Errorf("expected Quantity %f, got %v", *expectedResponse.Positions[0].Quantity, position1.Quantity)
+		}
+
+		position2 := response.Positions[1]
+		if position2.AssetClass != expectedResponse.Positions[1].AssetClass {
+			t.Errorf("expected AssetClass %s, got %s", expectedResponse.Positions[1].AssetClass, position2.AssetClass)
+		}
+		if len(position2.TaxType) != len(expectedResponse.Positions[1].TaxType) {
+			t.Errorf("expected TaxType length %d, got %d", len(expectedResponse.Positions[1].TaxType), len(position2.TaxType))
+		}
+	})
+
+	t.Run("success case: positions list with null optional fields", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := InvestmentPositions{
+			Positions: []InvestmentPosition{
+				{
+					ID:               123,
+					Date:             "2023-01-01",
+					AssetClass:       "cash",
+					AssetSubclass:    nil,
+					TickerCode:       nil,
+					NameRaw:          nil,
+					NameClean:        nil,
+					Currency:         "JPY",
+					TaxType:          nil,
+					TaxSubType:       nil,
+					MarketValue:      100000.00,
+					Value:            100000.00,
+					AcquisitionValue: nil,
+					CostBasis:        nil,
+					Profit:           nil,
+					Quantity:         nil,
+					CreatedAt:        "2023-01-01T00:00:00Z",
+					UpdatedAt:        "2023-01-01T00:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Positions) != 1 {
+			t.Fatalf("expected 1 position, got %d", len(response.Positions))
+		}
+		if response.Positions[0].TickerCode != nil {
+			t.Errorf("expected TickerCode nil, got %v", response.Positions[0].TickerCode)
+		}
+		if response.Positions[0].Quantity != nil {
+			t.Errorf("expected Quantity nil, got %v", response.Positions[0].Quantity)
+		}
+	})
+
+	t.Run("success case: positions list with pagination", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := InvestmentPositions{
+			Positions: []InvestmentPosition{
+				{
+					ID:          123,
+					Date:        "2023-01-01",
+					AssetClass:  "stock",
+					Currency:    "JPY",
+					MarketValue: 1000000.00,
+					Value:       1000000.00,
+					CreatedAt:   "2023-01-01T00:00:00Z",
+					UpdatedAt:   "2023-01-01T00:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Query().Get("page") != "2" {
+				t.Errorf("expected page=2, got %s", r.URL.Query().Get("page"))
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123",
+			WithPageForInvestmentPositions(2),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Positions) != 1 {
+			t.Fatalf("expected 1 position, got %d", len(response.Positions))
+		}
+	})
+
+	t.Run("success case: empty positions list", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := InvestmentPositions{
+			Positions: []InvestmentPosition{},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Positions) != 0 {
+			t.Fatalf("expected 0 positions, got %d", len(response.Positions))
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetInvestmentPositions(context.Background(), "", "account_key_123")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetInvestmentPositions(context.Background(), "test-token", "")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "account ID is required") {
+			t.Errorf("expected error about account ID, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token provided is invalid."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetInvestmentPositions(context.Background(), "invalid-token", "account_key_123")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetInvestmentPositions(nil, "test-token", "account_key_123")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
