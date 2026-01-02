@@ -586,3 +586,80 @@ func (c *Client) GetCorporateAccountTransactions(ctx context.Context, accessToke
 	}
 	return &res, nil
 }
+
+// UpdateCorporateAccountTransactionRequest represents a request to update a corporate account transaction.
+type UpdateCorporateAccountTransactionRequest struct {
+	// DescriptionGuest is a description/memo for transaction details, up to 255 characters.
+	// If null is set, previous data will be deleted.
+	// Do not set this parameter if you are not changing the value.
+	DescriptionGuest *string `json:"description_guest,omitempty"`
+	// CategoryID is the category of the transaction details.
+	// If the corresponding ID (common category or this guest user's category) does not exist, 400 will be returned.
+	// Do not set this parameter if you are not changing the value.
+	CategoryID *int64 `json:"category_id,omitempty"`
+}
+
+// UpdateCorporateAccountTransaction updates a corporate account transaction.
+// This endpoint requires the transactions_write OAuth scope.
+//
+// This API allows guest users to add memos (transaction content) to transaction details
+// and edit category data automatically registered by Moneytree.
+//
+// Example:
+//
+//	descriptionGuest := "新しいメモ"
+//	categoryID := int64(123)
+//	request := &moneytree.UpdateCorporateAccountTransactionRequest{
+//		DescriptionGuest: &descriptionGuest,
+//		CategoryID:       &categoryID,
+//	}
+//	transaction, err := client.UpdateCorporateAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("Updated transaction: ID=%d, Description=%s\n", transaction.ID, *transaction.DescriptionGuest)
+//
+// Example with only description:
+//
+//	descriptionGuest := "取引メモ"
+//	request := &moneytree.UpdateCorporateAccountTransactionRequest{
+//		DescriptionGuest: &descriptionGuest,
+//	}
+//	transaction, err := client.UpdateCorporateAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
+//
+// Example to delete description:
+//
+//	request := &moneytree.UpdateCorporateAccountTransactionRequest{
+//		DescriptionGuest: nil,
+//	}
+//	transaction, err := client.UpdateCorporateAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/put-link-corporate-account-transaction
+func (c *Client) UpdateCorporateAccountTransaction(ctx context.Context, accessToken string, accountID string, transactionID int64, req *UpdateCorporateAccountTransactionRequest) (*CorporateAccountTransaction, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+	if req == nil {
+		return nil, fmt.Errorf("request cannot be nil")
+	}
+
+	if req.DescriptionGuest != nil && len(*req.DescriptionGuest) > 255 {
+		return nil, fmt.Errorf("description_guest must be 255 characters or less, got %d characters", len(*req.DescriptionGuest))
+	}
+
+	urlPath := fmt.Sprintf("link/corporate/accounts/%s/transactions/%d.json", url.PathEscape(accountID), transactionID)
+
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res CorporateAccountTransaction
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}

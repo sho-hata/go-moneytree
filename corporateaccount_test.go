@@ -1648,3 +1648,473 @@ func TestGetCorporateAccountTransactions(t *testing.T) {
 	})
 }
 
+func TestUpdateCorporateAccountTransaction(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: transaction is updated correctly", func(t *testing.T) {
+		t.Parallel()
+
+		descriptionGuest := "新しいメモ"
+		descriptionPretty := "マネーツリーによる補正"
+		descriptionRaw := "生データ"
+		categoryEntityKey := "category_key_123"
+
+		expectedResponse := CorporateAccountTransaction{
+			ID:                1337,
+			Amount:            -5000.00,
+			Date:              "2023-12-01T10:00:00Z",
+			DescriptionGuest:  &descriptionGuest,
+			DescriptionPretty: &descriptionPretty,
+			DescriptionRaw:    &descriptionRaw,
+			AccountID:         1048,
+			CategoryID:        123,
+			Attributes:        CorporateAccountTransactionAttributes{},
+			CategoryEntityKey: &categoryEntityKey,
+			CreatedAt:         "2023-12-01T09:00:00Z",
+			UpdatedAt:         "2023-12-01T09:00:00Z",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPut {
+				t.Errorf("expected method %s, got %s", http.MethodPut, r.Method)
+			}
+			if r.URL.Path != "/link/corporate/accounts/account_key_123/transactions/1337.json" {
+				t.Errorf("expected path /link/corporate/accounts/account_key_123/transactions/1337.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+			contentType := r.Header.Get("Content-Type")
+			if contentType != "application/json" {
+				t.Errorf("expected Content-Type application/json, got %s", contentType)
+			}
+
+			var req UpdateCorporateAccountTransactionRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Errorf("failed to decode request: %v", err)
+			}
+			if req.DescriptionGuest == nil || *req.DescriptionGuest != "新しいメモ" {
+				t.Errorf("expected DescriptionGuest '新しいメモ', got %v", req.DescriptionGuest)
+			}
+			if req.CategoryID == nil || *req.CategoryID != 123 {
+				t.Errorf("expected CategoryID 123, got %v", req.CategoryID)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: &descriptionGuest,
+			CategoryID:       int64Ptr(123),
+		}
+
+		response, err := client.UpdateCorporateAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.ID != 1337 {
+			t.Errorf("expected ID 1337, got %d", response.ID)
+		}
+		if response.Amount != -5000.00 {
+			t.Errorf("expected Amount -5000.00, got %f", response.Amount)
+		}
+		if response.AccountID != 1048 {
+			t.Errorf("expected AccountID 1048, got %d", response.AccountID)
+		}
+		if response.CategoryID != 123 {
+			t.Errorf("expected CategoryID 123, got %d", response.CategoryID)
+		}
+		if response.DescriptionGuest == nil || *response.DescriptionGuest != descriptionGuest {
+			t.Errorf("expected DescriptionGuest %s, got %v", descriptionGuest, response.DescriptionGuest)
+		}
+	})
+
+	t.Run("success case: update only description_guest", func(t *testing.T) {
+		t.Parallel()
+
+		descriptionGuest := "メモのみ更新"
+
+		expectedResponse := CorporateAccountTransaction{
+			ID:               1337,
+			Amount:           -5000.00,
+			Date:             "2023-12-01T10:00:00Z",
+			DescriptionGuest: &descriptionGuest,
+			AccountID:        1048,
+			CategoryID:       456,
+			Attributes:       CorporateAccountTransactionAttributes{},
+			CreatedAt:        "2023-12-01T09:00:00Z",
+			UpdatedAt:        "2023-12-01T09:00:00Z",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req UpdateCorporateAccountTransactionRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Errorf("failed to decode request: %v", err)
+			}
+			if req.DescriptionGuest == nil || *req.DescriptionGuest != descriptionGuest {
+				t.Errorf("expected DescriptionGuest %s, got %v", descriptionGuest, req.DescriptionGuest)
+			}
+			if req.CategoryID != nil {
+				t.Errorf("expected CategoryID nil, got %v", req.CategoryID)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: &descriptionGuest,
+		}
+
+		response, err := client.UpdateCorporateAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.DescriptionGuest == nil || *response.DescriptionGuest != descriptionGuest {
+			t.Errorf("expected DescriptionGuest %s, got %v", descriptionGuest, response.DescriptionGuest)
+		}
+	})
+
+	t.Run("success case: update only category_id", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := CorporateAccountTransaction{
+			ID:         1337,
+			Amount:     -5000.00,
+			Date:       "2023-12-01T10:00:00Z",
+			AccountID:  1048,
+			CategoryID: 789,
+			Attributes: CorporateAccountTransactionAttributes{},
+			CreatedAt:  "2023-12-01T09:00:00Z",
+			UpdatedAt:  "2023-12-01T09:00:00Z",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req UpdateCorporateAccountTransactionRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Errorf("failed to decode request: %v", err)
+			}
+			if req.DescriptionGuest != nil {
+				t.Errorf("expected DescriptionGuest nil, got %v", req.DescriptionGuest)
+			}
+			if req.CategoryID == nil || *req.CategoryID != 789 {
+				t.Errorf("expected CategoryID 789, got %v", req.CategoryID)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			CategoryID: int64Ptr(789),
+		}
+
+		response, err := client.UpdateCorporateAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.CategoryID != 789 {
+			t.Errorf("expected CategoryID 789, got %d", response.CategoryID)
+		}
+	})
+
+	t.Run("success case: delete description_guest by setting null", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := CorporateAccountTransaction{
+			ID:         1337,
+			Amount:     -5000.00,
+			Date:       "2023-12-01T10:00:00Z",
+			AccountID:  1048,
+			CategoryID: 456,
+			Attributes: CorporateAccountTransactionAttributes{},
+			CreatedAt:  "2023-12-01T09:00:00Z",
+			UpdatedAt:  "2023-12-01T09:00:00Z",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req UpdateCorporateAccountTransactionRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Errorf("failed to decode request: %v", err)
+			}
+			if req.DescriptionGuest != nil {
+				t.Errorf("expected DescriptionGuest nil (null), got %v", req.DescriptionGuest)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: nil,
+		}
+
+		response, err := client.UpdateCorporateAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.DescriptionGuest != nil {
+			t.Errorf("expected DescriptionGuest nil, got %v", response.DescriptionGuest)
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: stringPtr("test"),
+		}
+
+		_, err = client.UpdateCorporateAccountTransaction(context.Background(), "", "account_key_123", 1337, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: stringPtr("test"),
+		}
+
+		_, err = client.UpdateCorporateAccountTransaction(context.Background(), "test-token", "", 1337, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "account ID is required") {
+			t.Errorf("expected error about account ID, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when request is nil", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.UpdateCorporateAccountTransaction(context.Background(), "test-token", "account_key_123", 1337, nil)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "request cannot be nil") {
+			t.Errorf("expected error about request, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when description_guest exceeds 255 characters", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		longDescription := strings.Repeat("a", 256)
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: &longDescription,
+		}
+
+		_, err = client.UpdateCorporateAccountTransaction(context.Background(), "test-token", "account_key_123", 1337, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "description_guest must be 255 characters or less") {
+			t.Errorf("expected error about description_guest length, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error": "invalid_request", "error_description": "Category ID does not exist."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			CategoryID: int64Ptr(99999),
+		}
+
+		_, err = client.UpdateCorporateAccountTransaction(context.Background(), "test-token", "account_key_123", 1337, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status code %d, got %d", http.StatusBadRequest, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_request") {
+			t.Errorf("expected error about invalid_request, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCorporateAccountTransactionRequest{
+			DescriptionGuest: stringPtr("test"),
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.UpdateCorporateAccountTransaction(nil, "test-token", "account_key_123", 1337, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
+
