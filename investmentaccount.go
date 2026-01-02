@@ -309,3 +309,150 @@ func (c *Client) GetInvestmentPositions(ctx context.Context, accessToken string,
 	return &res, nil
 }
 
+// InvestmentAccountTransaction represents a transaction record for an investment account returned by the Moneytree LINK API.
+// The specification is the same as personal account transactions.
+// This type is an alias for PersonalAccountTransaction for clarity and consistency.
+type InvestmentAccountTransaction = PersonalAccountTransaction
+
+// InvestmentAccountTransactions represents the response from the investment account transactions endpoint.
+type InvestmentAccountTransactions struct {
+	// Transactions is a list of transaction records for the account.
+	Transactions []InvestmentAccountTransaction `json:"transactions"`
+}
+
+// GetInvestmentAccountTransactionsOption configures options for the GetInvestmentAccountTransactions API call.
+type GetInvestmentAccountTransactionsOption func(*getTransactionsOptions)
+
+// WithPageForInvestmentTransactions specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForInvestmentTransactions(page int) GetInvestmentAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.Page = &page
+	}
+}
+
+// WithPerPageForInvestmentTransactions specifies the number of items per page.
+// The default value is 500. Valid range is 1 to 500.
+func WithPerPageForInvestmentTransactions(perPage int) GetInvestmentAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.PerPage = &perPage
+	}
+}
+
+// WithSortKeyForInvestmentTransactions specifies the sort key for transaction details.
+// If not provided, the database's id key is used by default.
+// Using sort_key may affect response time, so it is recommended to use it only when necessary.
+// If "date" is specified as the sort key, the database sorts by the transaction date
+// (which is the actual transaction date, not the date Moneytree obtained it).
+// The default value is "id".
+func WithSortKeyForInvestmentTransactions(sortKey string) GetInvestmentAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.SortKey = &sortKey
+	}
+}
+
+// WithSortByForInvestmentTransactions specifies the sort order.
+// Possible values: "asc" (ascending, default), "desc" (descending).
+// The default value is "asc".
+func WithSortByForInvestmentTransactions(sortBy string) GetInvestmentAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.SortBy = &sortBy
+	}
+}
+
+// WithSinceForInvestmentTransactions specifies a date to retrieve only records updated after this time (updated_at).
+// This is useful for incremental updates to avoid fetching all transactions every time.
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForInvestmentTransactions(since string) GetInvestmentAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.Since = &since
+	}
+}
+
+// GetInvestmentAccountTransactions retrieves the transaction records for a specific investment account.
+// This endpoint requires the investment_transactions_read OAuth scope.
+//
+// This API returns transaction records for investment accounts (such as buying and selling of assets held).
+// The specification is the same as personal account transactions.
+// Only the API path and required scope (investment_transactions_read) differ.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetInvestmentAccountTransactions(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, transaction := range response.Transactions {
+//		fmt.Printf("Date: %s, Amount: %v, Description: %s\n", transaction.Date, transaction.Amount, *transaction.DescriptionPretty)
+//	}
+//
+// Example with pagination and sorting:
+//
+//	response, err := client.GetInvestmentAccountTransactions(ctx, accessToken, "account_key_123",
+//		moneytree.WithPageForInvestmentTransactions(1),
+//		moneytree.WithPerPageForInvestmentTransactions(100),
+//		moneytree.WithSortKeyForInvestmentTransactions("date"),
+//		moneytree.WithSortByForInvestmentTransactions("desc"),
+//	)
+//
+// Example with since parameter:
+//
+//	response, err := client.GetInvestmentAccountTransactions(ctx, accessToken, "account_key_123",
+//		moneytree.WithSinceForInvestmentTransactions("2023-01-01"),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-investments-accounts-transactions
+func (c *Client) GetInvestmentAccountTransactions(ctx context.Context, accessToken string, accountID string, opts ...GetInvestmentAccountTransactionsOption) (*InvestmentAccountTransactions, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	options := &getTransactionsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
+	if options.SortBy != nil {
+		if *options.SortBy != "asc" && *options.SortBy != "desc" {
+			return nil, fmt.Errorf("sort_by must be 'asc' or 'desc', got: %s", *options.SortBy)
+		}
+	}
+
+	urlPath := fmt.Sprintf("link/investments/accounts/%s/transactions.json", url.PathEscape(accountID))
+	queryParams := url.Values{}
+	applyPaginationParams(queryParams, &options.paginationOptions)
+	if options.SortKey != nil {
+		queryParams.Set("sort_key", *options.SortKey)
+	}
+	if options.SortBy != nil {
+		queryParams.Set("sort_by", *options.SortBy)
+	}
+	if options.Since != nil {
+		queryParams.Set("since", *options.Since)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res InvestmentAccountTransactions
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
