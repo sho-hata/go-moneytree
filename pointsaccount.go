@@ -294,3 +294,130 @@ func (c *Client) GetPointAccountTransactions(ctx context.Context, accessToken st
 	}
 	return &res, nil
 }
+
+// PointExpiration represents a point expiration record returned by the Moneytree LINK API.
+// This record contains information about points that are expiring for a point account.
+type PointExpiration struct {
+	// ID is the point expiration record ID.
+	ID int64 `json:"id"`
+	// AccountID is the point account ID.
+	AccountID int64 `json:"account_id"`
+	// ExpirationAmount is the point balance reaching expiration.
+	ExpirationAmount float64 `json:"expiration_amount"`
+	// ExpirationDate is the expiration date.
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	ExpirationDate string `json:"expiration_date"`
+	// Date is the date when points reaching expiration were confirmed on the financial institution's website.
+	// Format: ISO 8601 date-time.
+	Date string `json:"date"`
+}
+
+// PointExpirations represents the response from the point expirations endpoint.
+type PointExpirations struct {
+	// PointExpirations is a list of point expiration records for the account.
+	PointExpirations []PointExpiration `json:"point_expirations"`
+}
+
+// GetPointExpirationsOption configures options for the GetPointExpirations API call.
+type GetPointExpirationsOption func(*getPointExpirationsOptions)
+
+type getPointExpirationsOptions struct {
+	paginationOptions
+	Since *string
+}
+
+// WithPageForPointExpirations specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForPointExpirations(page int) GetPointExpirationsOption {
+	return func(opts *getPointExpirationsOptions) {
+		opts.Page = &page
+	}
+}
+
+// WithPerPageForPointExpirations specifies the number of items per page.
+// The default value is 500. Valid range is 1 to 500.
+func WithPerPageForPointExpirations(perPage int) GetPointExpirationsOption {
+	return func(opts *getPointExpirationsOptions) {
+		opts.PerPage = &perPage
+	}
+}
+
+// WithSinceForPointExpirations specifies a date to retrieve only records updated after this time (updated_at).
+// This is useful for incremental updates to avoid fetching all expirations every time.
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForPointExpirations(since string) GetPointExpirationsOption {
+	return func(opts *getPointExpirationsOptions) {
+		opts.Since = &since
+	}
+}
+
+// GetPointExpirations retrieves the point expiration details for a specific point account.
+// This endpoint requires the points_read OAuth scope.
+//
+// This API returns point expiration records for the specified account.
+// Each record contains information about points that are expiring, including the expiration date
+// and the amount of points that will expire.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetPointExpirations(ctx, accessToken, 1048)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, expiration := range response.PointExpirations {
+//		fmt.Printf("Expiration Date: %s, Amount: %v\n", expiration.ExpirationDate, expiration.ExpirationAmount)
+//	}
+//
+// Example with pagination:
+//
+//	response, err := client.GetPointExpirations(ctx, accessToken, 1048,
+//		moneytree.WithPageForPointExpirations(1),
+//		moneytree.WithPerPageForPointExpirations(100),
+//	)
+//
+// Example with since parameter:
+//
+//	response, err := client.GetPointExpirations(ctx, accessToken, 1048,
+//		moneytree.WithSinceForPointExpirations("2023-01-01"),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-points-accounts-expirations
+func (c *Client) GetPointExpirations(ctx context.Context, accessToken string, accountID int64, opts ...GetPointExpirationsOption) (*PointExpirations, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+
+	options := &getPointExpirationsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
+	urlPath := fmt.Sprintf("link/points/accounts/%d/expirations.json", accountID)
+	queryParams := url.Values{}
+	applyPaginationParams(queryParams, &options.paginationOptions)
+	if options.Since != nil {
+		queryParams.Set("since", *options.Since)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res PointExpirations
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}

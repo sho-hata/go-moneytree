@@ -908,3 +908,383 @@ func TestGetPointAccountTransactions(t *testing.T) {
 	})
 }
 
+func TestGetPointExpirations(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: point expirations list is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointExpirations{
+			PointExpirations: []PointExpiration{
+				{
+					ID:               1,
+					AccountID:        123,
+					ExpirationAmount: 1000.00,
+					ExpirationDate:   "2024-12-31",
+					Date:             "2023-12-01T10:00:00Z",
+				},
+				{
+					ID:               2,
+					AccountID:        123,
+					ExpirationAmount: 500.00,
+					ExpirationDate:   "2025-01-15",
+					Date:             "2023-12-01T10:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/points/accounts/123/expirations.json" {
+				t.Errorf("expected path /link/points/accounts/123/expirations.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointExpirations) != 2 {
+			t.Fatalf("expected 2 point expirations, got %d", len(response.PointExpirations))
+		}
+
+		expiration1 := response.PointExpirations[0]
+		if expiration1.ID != expectedResponse.PointExpirations[0].ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.PointExpirations[0].ID, expiration1.ID)
+		}
+		if expiration1.AccountID != expectedResponse.PointExpirations[0].AccountID {
+			t.Errorf("expected AccountID %d, got %d", expectedResponse.PointExpirations[0].AccountID, expiration1.AccountID)
+		}
+		if expiration1.ExpirationAmount != expectedResponse.PointExpirations[0].ExpirationAmount {
+			t.Errorf("expected ExpirationAmount %f, got %f", expectedResponse.PointExpirations[0].ExpirationAmount, expiration1.ExpirationAmount)
+		}
+		if expiration1.ExpirationDate != expectedResponse.PointExpirations[0].ExpirationDate {
+			t.Errorf("expected ExpirationDate %s, got %s", expectedResponse.PointExpirations[0].ExpirationDate, expiration1.ExpirationDate)
+		}
+		if expiration1.Date != expectedResponse.PointExpirations[0].Date {
+			t.Errorf("expected Date %s, got %s", expectedResponse.PointExpirations[0].Date, expiration1.Date)
+		}
+
+		expiration2 := response.PointExpirations[1]
+		if expiration2.ID != expectedResponse.PointExpirations[1].ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.PointExpirations[1].ID, expiration2.ID)
+		}
+		if expiration2.ExpirationAmount != expectedResponse.PointExpirations[1].ExpirationAmount {
+			t.Errorf("expected ExpirationAmount %f, got %f", expectedResponse.PointExpirations[1].ExpirationAmount, expiration2.ExpirationAmount)
+		}
+	})
+
+	t.Run("success case: empty point expirations list", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointExpirations{
+			PointExpirations: []PointExpiration{},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointExpirations) != 0 {
+			t.Fatalf("expected 0 point expirations, got %d", len(response.PointExpirations))
+		}
+	})
+
+	t.Run("success case: point expirations list with pagination parameters", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointExpirations{
+			PointExpirations: []PointExpiration{
+				{
+					ID:               1,
+					AccountID:        123,
+					ExpirationAmount: 1000.00,
+					ExpirationDate:   "2024-12-31",
+					Date:             "2023-12-01T10:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/points/accounts/123/expirations.json" {
+				t.Errorf("expected path /link/points/accounts/123/expirations.json, got %s", r.URL.Path)
+			}
+			expectedPage := "2"
+			actualPage := r.URL.Query().Get("page")
+			if actualPage != expectedPage {
+				t.Errorf("expected page parameter %s, got %s", expectedPage, actualPage)
+			}
+			expectedPerPage := "100"
+			actualPerPage := r.URL.Query().Get("per_page")
+			if actualPerPage != expectedPerPage {
+				t.Errorf("expected per_page parameter %s, got %s", expectedPerPage, actualPerPage)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123,
+			WithPageForPointExpirations(2),
+			WithPerPageForPointExpirations(100),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointExpirations) != 1 {
+			t.Fatalf("expected 1 point expiration, got %d", len(response.PointExpirations))
+		}
+	})
+
+	t.Run("success case: point expirations list with since parameter", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointExpirations{
+			PointExpirations: []PointExpiration{
+				{
+					ID:               1,
+					AccountID:        123,
+					ExpirationAmount: 1000.00,
+					ExpirationDate:   "2024-12-31",
+					Date:             "2023-12-01T10:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedSince := "2023-01-01"
+			actualSince := r.URL.Query().Get("since")
+			if actualSince != expectedSince {
+				t.Errorf("expected since parameter %s, got %s", expectedSince, actualSince)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123,
+			WithSinceForPointExpirations("2023-01-01"),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointExpirations) != 1 {
+			t.Fatalf("expected 1 point expiration, got %d", len(response.PointExpirations))
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointExpirations(context.Background(), "", 123)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when since date format is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointExpirations(context.Background(), "test-token", 123,
+			WithSinceForPointExpirations("2023/01/01"),
+		)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+			t.Errorf("expected error about date format, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := int64(123)
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			if _, err := w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token is invalid or expired."}`)); err != nil {
+				t.Errorf("failed to write response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointExpirations(context.Background(), "invalid-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := int64(123)
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetPointExpirations(nil, "test-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
