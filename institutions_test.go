@@ -413,6 +413,7 @@ func TestWithSince_InvalidDateFormat(t *testing.T) {
 				}
 
 				client := &Client{
+					httpClient: http.DefaultClient,
 					config: &Config{
 						BaseURL: baseURL,
 					},

@@ -593,3 +593,90 @@ func (c *Client) GetPersonalAccountTransactions(ctx context.Context, accessToken
 	}
 	return &res, nil
 }
+
+// UpdatePersonalAccountTransactionRequest represents a request to update a personal account transaction.
+type UpdatePersonalAccountTransactionRequest struct {
+	// Date is the transaction date.
+	// This parameter can only be edited for manually entered accounts.
+	// For automatic accounts (financial institutions), this parameter is ignored even if set.
+	// Format: ISO 8601 date-time.
+	Date *string `json:"date,omitempty"`
+	// Amount is the transaction amount.
+	// This parameter can only be edited for manually entered accounts.
+	// For automatic accounts (financial institutions), this parameter is ignored even if set.
+	Amount *float64 `json:"amount,omitempty"`
+	// DescriptionGuest is a description/memo for transaction details, up to 255 characters.
+	// If null is set, previous data will be deleted.
+	// Do not set this parameter if you are not changing the value.
+	DescriptionGuest *string `json:"description_guest,omitempty"`
+	// CategoryID is the category of the transaction details.
+	// If the corresponding ID (common category or this guest user's category) does not exist, 400 will be returned.
+	// Do not set this parameter if you are not changing the value.
+	CategoryID *int64 `json:"category_id,omitempty"`
+}
+
+// UpdatePersonalAccountTransaction updates a personal account transaction.
+// This endpoint requires the transactions_write OAuth scope.
+//
+// This API allows guest users to add memos (transaction content) to transaction details
+// and edit category data automatically registered by Moneytree.
+//
+// For manually entered accounts, you can also edit the date and amount.
+// For automatic accounts (financial institutions), date and amount cannot be edited,
+// but these parameters are ignored if set, and the request will be processed successfully.
+//
+// Example:
+//
+//	descriptionGuest := "新しいメモ"
+//	categoryID := int64(123)
+//	request := &moneytree.UpdatePersonalAccountTransactionRequest{
+//		DescriptionGuest: &descriptionGuest,
+//		CategoryID:       &categoryID,
+//	}
+//	transaction, err := client.UpdatePersonalAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("Updated transaction: ID=%d, Description=%s\n", transaction.ID, *transaction.DescriptionGuest)
+//
+// Example for manually entered account (with date and amount):
+//
+//	date := "2023-12-01T10:00:00Z"
+//	amount := -5000.00
+//	descriptionGuest := "手入力取引"
+//	request := &moneytree.UpdatePersonalAccountTransactionRequest{
+//		Date:             &date,
+//		Amount:           &amount,
+//		DescriptionGuest: &descriptionGuest,
+//	}
+//	transaction, err := client.UpdatePersonalAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/put-link-account-transaction
+func (c *Client) UpdatePersonalAccountTransaction(ctx context.Context, accessToken string, accountID string, transactionID int64, req *UpdatePersonalAccountTransactionRequest) (*PersonalAccountTransaction, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+	if req == nil {
+		return nil, fmt.Errorf("request cannot be nil")
+	}
+
+	if req.DescriptionGuest != nil && len(*req.DescriptionGuest) > 255 {
+		return nil, fmt.Errorf("description_guest must be 255 characters or less, got %d characters", len(*req.DescriptionGuest))
+	}
+
+	urlPath := fmt.Sprintf("link/accounts/%s/transactions/%d.json", url.PathEscape(accountID), transactionID)
+
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res PersonalAccountTransaction
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
