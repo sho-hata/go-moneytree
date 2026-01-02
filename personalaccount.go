@@ -264,3 +264,129 @@ func (c *Client) GetPersonalAccountBalances(ctx context.Context, accessToken str
 	}
 	return &res, nil
 }
+
+// TermDeposit represents a term deposit record for a personal account returned by the Moneytree LINK API.
+type TermDeposit struct {
+	// ID is the balance record ID.
+	ID int64 `json:"id"`
+	// AccountID is the account ID.
+	AccountID int64 `json:"account_id"`
+	// Date is the date when the balance was confirmed on the financial institution's website.
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	Date string `json:"date"`
+	// PurchaseDate is the deposit date of the term deposit.
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	PurchaseDate *string `json:"purchase_date,omitempty"`
+	// MaturityDate is the maturity date of the term deposit.
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	MaturityDate *string `json:"maturity_date,omitempty"`
+	// NameRaw is the summary of the term deposit statement as provided by the financial institution.
+	NameRaw *string `json:"name_raw,omitempty"`
+	// NameClean is the summary of the term deposit statement (value corrected by Moneytree).
+	NameClean *string `json:"name_clean,omitempty"`
+	// Value is the appraised value at the time of date.
+	// This is the appraised value at the time Moneytree last acquired data.
+	Value float64 `json:"value"`
+	// CostBasis is the deposit amount of the term deposit.
+	CostBasis float64 `json:"cost_basis"`
+	// InterestRate is the interest rate.
+	InterestRate float64 `json:"interest_rate"`
+	// Currency is the currency code (ISO4217).
+	Currency string `json:"currency"`
+	// TermLengthYear is the deposit period of the term deposit in years.
+	// Note: term_length* fields depend on data provided by the financial institution.
+	TermLengthYear *int `json:"term_length_year,omitempty"`
+	// TermLengthMonth is the deposit period of the term deposit in months.
+	TermLengthMonth *int `json:"term_length_month,omitempty"`
+	// TermLengthDay is the deposit period of the term deposit in days.
+	TermLengthDay *int `json:"term_length_day,omitempty"`
+}
+
+// TermDeposits represents the response from the term deposits endpoint.
+type TermDeposits struct {
+	// TermDeposits is a list of term deposit records for the account.
+	TermDeposits []TermDeposit `json:"term_deposits"`
+}
+
+// GetTermDepositsOption configures options for the GetTermDeposits API call.
+type GetTermDepositsOption func(*getTermDepositsOptions)
+
+type getTermDepositsOptions struct {
+	Page *int
+}
+
+// WithPageForTermDeposits specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForTermDeposits(page int) GetTermDepositsOption {
+	return func(opts *getTermDepositsOptions) {
+		opts.Page = &page
+	}
+}
+
+// GetTermDeposits retrieves the term deposit records for a specific personal account.
+// This endpoint requires the accounts_read OAuth scope.
+//
+// This API returns term deposit records for the specified account.
+// Note: Term deposit records are only available for certain financial institutions.
+// For accounts that do not support term deposit records, term_deposits will be empty.
+//
+// Supported account_subtype values:
+//   - term_deposit
+//   - term_deposit_builder
+//   - term_deposit_shikumi
+//   - term_tsumitate
+//   - term_deposit_kawase [DEPRECATED]
+//   - term_deposit_manki [DEPRECATED]
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetTermDeposits(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, deposit := range response.TermDeposits {
+//		fmt.Printf("Date: %s, Value: %v, CostBasis: %v\n", deposit.Date, deposit.Value, deposit.CostBasis)
+//	}
+//
+// Example with pagination:
+//
+//	response, err := client.GetTermDeposits(ctx, accessToken, "account_key_123",
+//		moneytree.WithPageForTermDeposits(1),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-account-term-deposits
+func (c *Client) GetTermDeposits(ctx context.Context, accessToken string, accountID string, opts ...GetTermDepositsOption) (*TermDeposits, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	options := &getTermDepositsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	urlPath := fmt.Sprintf("link/accounts/%s/term_deposits.json", url.PathEscape(accountID))
+	queryParams := url.Values{}
+	if options.Page != nil {
+		queryParams.Set("page", fmt.Sprintf("%d", *options.Page))
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res TermDeposits
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}

@@ -1007,3 +1007,330 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		}
 	})
 }
+
+func TestGetTermDeposits(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: term deposits list is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		purchaseDate := "2023-01-01"
+		maturityDate := "2025-01-01"
+		nameRaw := "定期預金"
+		nameClean := "定期預金（補正済み）"
+		termLengthYear := 2
+		termLengthMonth := 0
+		termLengthDay := 0
+
+		expectedResponse := TermDeposits{
+			TermDeposits: []TermDeposit{
+				{
+					ID:             1048,
+					AccountID:      123,
+					Date:           "2023-12-01",
+					PurchaseDate:   &purchaseDate,
+					MaturityDate:   &maturityDate,
+					NameRaw:        &nameRaw,
+					NameClean:      &nameClean,
+					Value:          1050000.00,
+					CostBasis:      1000000.00,
+					InterestRate:   0.25,
+					Currency:       "JPY",
+					TermLengthYear: &termLengthYear,
+					TermLengthMonth: &termLengthMonth,
+					TermLengthDay:  &termLengthDay,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/accounts/account_key_123/term_deposits.json" {
+				t.Errorf("expected path /link/accounts/account_key_123/term_deposits.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetTermDeposits(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.TermDeposits) != 1 {
+			t.Fatalf("expected 1 term deposit, got %d", len(response.TermDeposits))
+		}
+
+		deposit := response.TermDeposits[0]
+		if deposit.ID != 1048 {
+			t.Errorf("expected ID 1048, got %d", deposit.ID)
+		}
+		if deposit.AccountID != 123 {
+			t.Errorf("expected AccountID 123, got %d", deposit.AccountID)
+		}
+		if deposit.Date != "2023-12-01" {
+			t.Errorf("expected Date 2023-12-01, got %s", deposit.Date)
+		}
+		if deposit.Value != 1050000.00 {
+			t.Errorf("expected Value 1050000.00, got %f", deposit.Value)
+		}
+		if deposit.CostBasis != 1000000.00 {
+			t.Errorf("expected CostBasis 1000000.00, got %f", deposit.CostBasis)
+		}
+		if deposit.InterestRate != 0.25 {
+			t.Errorf("expected InterestRate 0.25, got %f", deposit.InterestRate)
+		}
+		if deposit.Currency != "JPY" {
+			t.Errorf("expected Currency JPY, got %s", deposit.Currency)
+		}
+	})
+
+	t.Run("success case: empty term deposits list", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := TermDeposits{
+			TermDeposits: []TermDeposit{},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetTermDeposits(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.TermDeposits) != 0 {
+			t.Fatalf("expected 0 term deposits, got %d", len(response.TermDeposits))
+		}
+	})
+
+	t.Run("success case: term deposits list with page parameter", func(t *testing.T) {
+		t.Parallel()
+
+		purchaseDate := "2023-01-01"
+		maturityDate := "2025-01-01"
+
+		expectedResponse := TermDeposits{
+			TermDeposits: []TermDeposit{
+				{
+					ID:           1048,
+					AccountID:    123,
+					Date:         "2023-12-01",
+					PurchaseDate: &purchaseDate,
+					MaturityDate: &maturityDate,
+					Value:        1050000.00,
+					CostBasis:    1000000.00,
+					InterestRate: 0.25,
+					Currency:     "JPY",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/accounts/account_key_123/term_deposits.json" {
+				t.Errorf("expected path /link/accounts/account_key_123/term_deposits.json, got %s", r.URL.Path)
+			}
+			expectedPage := "2"
+			actualPage := r.URL.Query().Get("page")
+			if actualPage != expectedPage {
+				t.Errorf("expected page parameter %s, got %s", expectedPage, actualPage)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetTermDeposits(context.Background(), "test-access-token", "account_key_123", WithPageForTermDeposits(2))
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.TermDeposits) != 1 {
+			t.Fatalf("expected 1 term deposit, got %d", len(response.TermDeposits))
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetTermDeposits(context.Background(), "", "account_key_123")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetTermDeposits(context.Background(), "test-token", "")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "account ID is required") {
+			t.Errorf("expected error about account ID, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token is invalid or expired."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetTermDeposits(context.Background(), "invalid-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetTermDeposits(nil, "test-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
