@@ -390,3 +390,206 @@ func (c *Client) GetTermDeposits(ctx context.Context, accessToken string, accoun
 	}
 	return &res, nil
 }
+
+// PersonalAccountTransactionAttributes represents optional attributes for a transaction.
+// This object may be empty depending on the transaction.
+// The properties returned depend on the account's subtype.
+type PersonalAccountTransactionAttributes struct {
+	// ExpenseType is the type of transaction.
+	// Deprecated: This field is deprecated.
+	// Possible values: 0 = Unknown (assumed private use), 1 = Private use, 2 = Business.
+	ExpenseType *int `json:"expense_type,omitempty"`
+	// PredictedExpenseType is the predicted type of transaction.
+	// Deprecated: This field is deprecated.
+	// Possible values: 0 = Unknown (assumed private use), 1 = Private use, 2 = Business.
+	PredictedExpenseType *int `json:"predicted_expense_type,omitempty"`
+	// DataSource indicates the data source.
+	// Deprecated: This field is deprecated.
+	DataSource *string `json:"data_source,omitempty"`
+}
+
+// PersonalAccountTransaction represents a transaction record for a personal account returned by the Moneytree LINK API.
+type PersonalAccountTransaction struct {
+	// ID is the transaction ID (unique across the entire system).
+	// For example, if the same financial institution account is registered twice
+	// with the same authentication information, different IDs will be assigned to each entity.
+	ID int64 `json:"id"`
+	// Amount is the transaction amount.
+	Amount float64 `json:"amount"`
+	// Date is the transaction date.
+	// Format: ISO 8601 date-time.
+	Date string `json:"date"`
+	// DescriptionGuest is the content of the transaction entered by the customer.
+	DescriptionGuest *string `json:"description_guest"`
+	// DescriptionPretty is the content of the transaction corrected by Moneytree.
+	DescriptionPretty *string `json:"description_pretty"`
+	// DescriptionRaw is the unedited transaction content (raw data).
+	// Regarding the details (summary field), there are digit restrictions depending on the bank API specifications.
+	// For details, please check the publicly available API specifications of each bank.
+	DescriptionRaw *string `json:"description_raw"`
+	// AccountID is the account ID.
+	AccountID int64 `json:"account_id"`
+	// CategoryID is the category ID of the transaction detail.
+	CategoryID int64 `json:"category_id"`
+	// Attributes contains optional attributes for the transaction.
+	// This object may be empty depending on the transaction.
+	// The properties returned depend on the account's subtype.
+	Attributes PersonalAccountTransactionAttributes `json:"attributes"`
+	// CategoryEntityKey is the entity key of the specified category in the transaction details.
+	// If it is a user-defined category, this value is null. Otherwise, it has a value.
+	CategoryEntityKey *string `json:"category_entity_key"`
+	// CreatedAt is the time registered with Moneytree.
+	// Format: ISO 8601 date-time.
+	CreatedAt string `json:"created_at"`
+	// UpdatedAt is the last updated time (updated by Moneytree or user changes, etc.).
+	// Format: ISO 8601 date-time.
+	UpdatedAt string `json:"updated_at"`
+}
+
+// PersonalAccountTransactions represents the response from the transactions endpoint.
+type PersonalAccountTransactions struct {
+	// Transactions is a list of transaction records for the account.
+	Transactions []PersonalAccountTransaction `json:"transactions"`
+}
+
+// GetPersonalAccountTransactionsOption configures options for the GetPersonalAccountTransactions API call.
+type GetPersonalAccountTransactionsOption func(*getTransactionsOptions)
+
+type getTransactionsOptions struct {
+	paginationOptions
+	SortKey *string
+	SortBy  *string
+	Since   *string
+}
+
+// WithPageForTransactions specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForTransactions(page int) GetPersonalAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.Page = &page
+	}
+}
+
+// WithPerPageForTransactions specifies the number of items per page.
+// The default value is 500. Valid range is 1 to 500.
+func WithPerPageForTransactions(perPage int) GetPersonalAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.PerPage = &perPage
+	}
+}
+
+// WithSortKeyForTransactions specifies the sort key for transaction details.
+// If not provided, the database's id key is used by default.
+// Using sort_key may affect response time, so it is recommended to use it only when necessary.
+// If "date" is specified as the sort key, the database sorts by the transaction date
+// (which is the actual transaction date, not the date Moneytree obtained it).
+// The default value is "id".
+func WithSortKeyForTransactions(sortKey string) GetPersonalAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.SortKey = &sortKey
+	}
+}
+
+// WithSortByForTransactions specifies the sort order.
+// Possible values: "asc" (ascending, default), "desc" (descending).
+// The default value is "asc".
+func WithSortByForTransactions(sortBy string) GetPersonalAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.SortBy = &sortBy
+	}
+}
+
+// WithSinceForTransactions specifies a date to retrieve only records updated after this time (updated_at).
+// This is useful for incremental updates to avoid fetching all transactions every time.
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForTransactions(since string) GetPersonalAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.Since = &since
+	}
+}
+
+// GetPersonalAccountTransactions retrieves the transaction records for a specific personal account.
+// This endpoint requires the transactions_read OAuth scope.
+//
+// This API returns transaction records for the specified account.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetPersonalAccountTransactions(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, transaction := range response.Transactions {
+//		fmt.Printf("Date: %s, Amount: %v, Description: %s\n", transaction.Date, transaction.Amount, *transaction.DescriptionPretty)
+//	}
+//
+// Example with pagination and sorting:
+//
+//	response, err := client.GetPersonalAccountTransactions(ctx, accessToken, "account_key_123",
+//		moneytree.WithPageForTransactions(1),
+//		moneytree.WithPerPageForTransactions(100),
+//		moneytree.WithSortKeyForTransactions("date"),
+//		moneytree.WithSortByForTransactions("desc"),
+//	)
+//
+// Example with since parameter:
+//
+//	response, err := client.GetPersonalAccountTransactions(ctx, accessToken, "account_key_123",
+//		moneytree.WithSinceForTransactions("2023-01-01"),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-accounts-transactions
+func (c *Client) GetPersonalAccountTransactions(ctx context.Context, accessToken string, accountID string, opts ...GetPersonalAccountTransactionsOption) (*PersonalAccountTransactions, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	options := &getTransactionsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
+	if options.SortBy != nil {
+		if *options.SortBy != "asc" && *options.SortBy != "desc" {
+			return nil, fmt.Errorf("sort_by must be 'asc' or 'desc', got: %s", *options.SortBy)
+		}
+	}
+
+	urlPath := fmt.Sprintf("link/accounts/%s/transactions.json", url.PathEscape(accountID))
+	queryParams := url.Values{}
+	applyPaginationParams(queryParams, &options.paginationOptions)
+	if options.SortKey != nil {
+		queryParams.Set("sort_key", *options.SortKey)
+	}
+	if options.SortBy != nil {
+		queryParams.Set("sort_by", *options.SortBy)
+	}
+	if options.Since != nil {
+		queryParams.Set("since", *options.Since)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res PersonalAccountTransactions
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
