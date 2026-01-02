@@ -149,3 +149,148 @@ func (c *Client) GetPointAccounts(ctx context.Context, accessToken string, opts 
 	}
 	return &res, nil
 }
+
+// PointAccountTransaction represents a transaction record for a point account returned by the Moneytree LINK API.
+// The specification is the same as personal account transactions.
+// This type is an alias for PersonalAccountTransaction for clarity and consistency.
+type PointAccountTransaction = PersonalAccountTransaction
+
+// PointAccountTransactions represents the response from the point account transactions endpoint.
+type PointAccountTransactions struct {
+	// Transactions is a list of transaction records for the account.
+	Transactions []PointAccountTransaction `json:"transactions"`
+}
+
+// GetPointAccountTransactionsOption configures options for the GetPointAccountTransactions API call.
+type GetPointAccountTransactionsOption func(*getTransactionsOptions)
+
+// WithPageForPointAccountTransactions specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForPointAccountTransactions(page int) GetPointAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.Page = &page
+	}
+}
+
+// WithPerPageForPointAccountTransactions specifies the number of items per page.
+// The default value is 500. Valid range is 1 to 500.
+func WithPerPageForPointAccountTransactions(perPage int) GetPointAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.PerPage = &perPage
+	}
+}
+
+// WithSortKeyForPointAccountTransactions specifies the sort key for transaction details.
+// If not provided, the database's id key is used by default.
+// Using sort_key may affect response time, so it is recommended to use it only when necessary.
+// If "date" is specified as the sort key, the database sorts by the transaction date
+// (which is the actual transaction date, not the date Moneytree obtained it).
+// The default value is "id".
+func WithSortKeyForPointAccountTransactions(sortKey string) GetPointAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.SortKey = &sortKey
+	}
+}
+
+// WithSortByForPointAccountTransactions specifies the sort order.
+// Possible values: "asc" (ascending, default), "desc" (descending).
+// The default value is "asc".
+func WithSortByForPointAccountTransactions(sortBy string) GetPointAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.SortBy = &sortBy
+	}
+}
+
+// WithSinceForPointAccountTransactions specifies a date to retrieve only records updated after this time (updated_at).
+// This is useful for incremental updates to avoid fetching all transactions every time.
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForPointAccountTransactions(since string) GetPointAccountTransactionsOption {
+	return func(opts *getTransactionsOptions) {
+		opts.Since = &since
+	}
+}
+
+// GetPointAccountTransactions retrieves the transaction records for a specific point account.
+// This endpoint requires the points_read OAuth scope.
+//
+// This API returns transaction records for point accounts.
+// The specification is the same as personal account transactions.
+// Only the API path and required scope (points_read) differ.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetPointAccountTransactions(ctx, accessToken, 1048)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, transaction := range response.Transactions {
+//		fmt.Printf("Date: %s, Amount: %v, Description: %s\n", transaction.Date, transaction.Amount, *transaction.DescriptionPretty)
+//	}
+//
+// Example with pagination and sorting:
+//
+//	response, err := client.GetPointAccountTransactions(ctx, accessToken, 1048,
+//		moneytree.WithPageForPointAccountTransactions(1),
+//		moneytree.WithPerPageForPointAccountTransactions(100),
+//		moneytree.WithSortKeyForPointAccountTransactions("date"),
+//		moneytree.WithSortByForPointAccountTransactions("desc"),
+//	)
+//
+// Example with since parameter:
+//
+//	response, err := client.GetPointAccountTransactions(ctx, accessToken, 1048,
+//		moneytree.WithSinceForPointAccountTransactions("2023-01-01"),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-points-accounts-transactions
+func (c *Client) GetPointAccountTransactions(ctx context.Context, accessToken string, accountID int64, opts ...GetPointAccountTransactionsOption) (*PointAccountTransactions, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+
+	options := &getTransactionsOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
+	if options.SortBy != nil {
+		if *options.SortBy != "asc" && *options.SortBy != "desc" {
+			return nil, fmt.Errorf("sort_by must be 'asc' or 'desc', got: %s", *options.SortBy)
+		}
+	}
+
+	urlPath := fmt.Sprintf("link/points/accounts/%d/transactions.json", accountID)
+	queryParams := url.Values{}
+	applyPaginationParams(queryParams, &options.paginationOptions)
+	if options.SortKey != nil {
+		queryParams.Set("sort_key", *options.SortKey)
+	}
+	if options.SortBy != nil {
+		queryParams.Set("sort_by", *options.SortBy)
+	}
+	if options.Since != nil {
+		queryParams.Set("since", *options.Since)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res PointAccountTransactions
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}

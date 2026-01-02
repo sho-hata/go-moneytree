@@ -433,3 +433,478 @@ func TestGetPointAccounts(t *testing.T) {
 	})
 }
 
+func TestGetPointAccountTransactions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: transactions list is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		descriptionGuest := "ポイント獲得"
+		descriptionPretty := "ポイント獲得"
+		descriptionRaw := "ポイント獲得"
+		categoryEntityKey := "category_key_123"
+
+		expectedResponse := PointAccountTransactions{
+			Transactions: []PointAccountTransaction{
+				{
+					ID:                1048,
+					Amount:            1000.00,
+					Date:              "2023-12-01T10:00:00Z",
+					DescriptionGuest:  &descriptionGuest,
+					DescriptionPretty: &descriptionPretty,
+					DescriptionRaw:    &descriptionRaw,
+					AccountID:         123,
+					CategoryID:        456,
+					Attributes:        PersonalAccountTransactionAttributes{},
+					CategoryEntityKey: &categoryEntityKey,
+					CreatedAt:         "2023-12-01T09:00:00Z",
+					UpdatedAt:         "2023-12-01T09:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/points/accounts/123/transactions.json" {
+				t.Errorf("expected path /link/points/accounts/123/transactions.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Transactions) != 1 {
+			t.Fatalf("expected 1 transaction, got %d", len(response.Transactions))
+		}
+
+		transaction := response.Transactions[0]
+		if transaction.ID != 1048 {
+			t.Errorf("expected ID 1048, got %d", transaction.ID)
+		}
+		if transaction.Amount != 1000.00 {
+			t.Errorf("expected Amount 1000.00, got %f", transaction.Amount)
+		}
+		if transaction.Date != "2023-12-01T10:00:00Z" {
+			t.Errorf("expected Date 2023-12-01T10:00:00Z, got %s", transaction.Date)
+		}
+		if transaction.AccountID != 123 {
+			t.Errorf("expected AccountID 123, got %d", transaction.AccountID)
+		}
+		if transaction.CategoryID != 456 {
+			t.Errorf("expected CategoryID 456, got %d", transaction.CategoryID)
+		}
+	})
+
+	t.Run("success case: empty transactions list", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointAccountTransactions{
+			Transactions: []PointAccountTransaction{},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Transactions) != 0 {
+			t.Fatalf("expected 0 transactions, got %d", len(response.Transactions))
+		}
+	})
+
+	t.Run("success case: transactions list with pagination parameters", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointAccountTransactions{
+			Transactions: []PointAccountTransaction{
+				{
+					ID:         1048,
+					Amount:     1000.00,
+					Date:       "2023-12-01T10:00:00Z",
+					AccountID:  123,
+					CategoryID: 456,
+					Attributes: PersonalAccountTransactionAttributes{},
+					CreatedAt:  "2023-12-01T09:00:00Z",
+					UpdatedAt:  "2023-12-01T09:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/points/accounts/123/transactions.json" {
+				t.Errorf("expected path /link/points/accounts/123/transactions.json, got %s", r.URL.Path)
+			}
+			expectedPage := "2"
+			actualPage := r.URL.Query().Get("page")
+			if actualPage != expectedPage {
+				t.Errorf("expected page parameter %s, got %s", expectedPage, actualPage)
+			}
+			expectedPerPage := "100"
+			actualPerPage := r.URL.Query().Get("per_page")
+			if actualPerPage != expectedPerPage {
+				t.Errorf("expected per_page parameter %s, got %s", expectedPerPage, actualPerPage)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123,
+			WithPageForPointAccountTransactions(2),
+			WithPerPageForPointAccountTransactions(100),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Transactions) != 1 {
+			t.Fatalf("expected 1 transaction, got %d", len(response.Transactions))
+		}
+	})
+
+	t.Run("success case: transactions list with sort parameters", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointAccountTransactions{
+			Transactions: []PointAccountTransaction{
+				{
+					ID:         1048,
+					Amount:     1000.00,
+					Date:       "2023-12-01T10:00:00Z",
+					AccountID:  123,
+					CategoryID: 456,
+					Attributes: PersonalAccountTransactionAttributes{},
+					CreatedAt:  "2023-12-01T09:00:00Z",
+					UpdatedAt:  "2023-12-01T09:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedSortKey := "date"
+			actualSortKey := r.URL.Query().Get("sort_key")
+			if actualSortKey != expectedSortKey {
+				t.Errorf("expected sort_key parameter %s, got %s", expectedSortKey, actualSortKey)
+			}
+			expectedSortBy := "desc"
+			actualSortBy := r.URL.Query().Get("sort_by")
+			if actualSortBy != expectedSortBy {
+				t.Errorf("expected sort_by parameter %s, got %s", expectedSortBy, actualSortBy)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123,
+			WithSortKeyForPointAccountTransactions("date"),
+			WithSortByForPointAccountTransactions("desc"),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Transactions) != 1 {
+			t.Fatalf("expected 1 transaction, got %d", len(response.Transactions))
+		}
+	})
+
+	t.Run("success case: transactions list with since parameter", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointAccountTransactions{
+			Transactions: []PointAccountTransaction{
+				{
+					ID:         1048,
+					Amount:     1000.00,
+					Date:       "2023-12-01T10:00:00Z",
+					AccountID:  123,
+					CategoryID: 456,
+					Attributes: PersonalAccountTransactionAttributes{},
+					CreatedAt:  "2023-12-01T09:00:00Z",
+					UpdatedAt:  "2023-12-01T09:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedSince := "2023-01-01"
+			actualSince := r.URL.Query().Get("since")
+			if actualSince != expectedSince {
+				t.Errorf("expected since parameter %s, got %s", expectedSince, actualSince)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123,
+			WithSinceForPointAccountTransactions("2023-01-01"),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.Transactions) != 1 {
+			t.Fatalf("expected 1 transaction, got %d", len(response.Transactions))
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointAccountTransactions(context.Background(), "", 123)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when sort_by is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointAccountTransactions(context.Background(), "test-token", 123,
+			WithSortByForPointAccountTransactions("invalid"),
+		)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "sort_by must be 'asc' or 'desc'") {
+			t.Errorf("expected error about sort_by, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when since date format is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointAccountTransactions(context.Background(), "test-token", 123,
+			WithSinceForPointAccountTransactions("2023/01/01"),
+		)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+			t.Errorf("expected error about date format, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := int64(123)
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			if _, err := w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token is invalid or expired."}`)); err != nil {
+				t.Errorf("failed to write response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointAccountTransactions(context.Background(), "invalid-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := int64(123)
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetPointAccountTransactions(nil, "test-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
+
