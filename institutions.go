@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 // Institution represents a financial institution returned by the Moneytree LINK API.
@@ -68,14 +67,15 @@ type Institutions struct {
 type GetInstitutionsOption func(*getInstitutionsOptions)
 
 type getInstitutionsOptions struct {
-	Since *time.Time
+	Since *string
 }
 
-// WithSince specifies a timestamp to retrieve only institutions updated after this time.
+// WithSince specifies a date to retrieve only institutions updated after this time.
 // This is useful for incremental updates to avoid fetching all institutions every time.
-func WithSince(t time.Time) GetInstitutionsOption {
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSince(since string) GetInstitutionsOption {
 	return func(opts *getInstitutionsOptions) {
-		opts.Since = &t
+		opts.Since = &since
 	}
 }
 
@@ -108,8 +108,7 @@ func WithSince(t time.Time) GetInstitutionsOption {
 //
 // Example with since parameter:
 //
-//	lastUpdate := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-//	response, err := client.GetInstitutions(ctx, systemAccessToken, moneytree.WithSince(lastUpdate))
+//	response, err := client.GetInstitutions(ctx, systemAccessToken, moneytree.WithSince("2023-01-01"))
 //	if err != nil {
 //		log.Fatal(err)
 //	}
@@ -125,9 +124,15 @@ func (c *Client) GetInstitutions(ctx context.Context, accessToken string, opts .
 		opt(options)
 	}
 
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
 	urlPath := "link/institutions.json"
 	if options.Since != nil {
-		urlPath = fmt.Sprintf("%s?since=%s", urlPath, url.QueryEscape(options.Since.Format("2006-01-02")))
+		urlPath = fmt.Sprintf("%s?since=%s", urlPath, url.QueryEscape(*options.Since))
 	}
 
 	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))

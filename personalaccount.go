@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"time"
 )
 
 // paginationOptions represents common pagination options used across multiple API endpoints.
@@ -51,7 +50,8 @@ type PersonalAccount struct {
 	// Currency is the currency code of the account (e.g., "JPY", "USD").
 	Currency *string `json:"currency,omitempty"`
 	// LastAggregatedAt is the last time data was acquired for this account.
-	LastAggregatedAt *time.Time `json:"last_aggregated_at,omitempty"`
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	LastAggregatedAt *string `json:"last_aggregated_at,omitempty"`
 }
 
 // PersonalAccounts represents the response from the individual accounts endpoint.
@@ -145,7 +145,8 @@ type PersonalAccountBalance struct {
 	// AccountID is the account ID.
 	AccountID int64 `json:"account_id"`
 	// Date is the date when the balance was confirmed on the financial institution's website.
-	Date time.Time `json:"date"`
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	Date string `json:"date"`
 	// Balance is the account balance.
 	Balance float64 `json:"balance"`
 	// BalanceInBase is the account balance converted to JPY.
@@ -166,7 +167,7 @@ type GetPersonalAccountBalancesOption func(*getPersonalAccountBalancesOptions)
 
 type getPersonalAccountBalancesOptions struct {
 	paginationOptions
-	Since *time.Time
+	Since *string
 }
 
 // WithPageForBalances specifies the page number for pagination.
@@ -189,9 +190,10 @@ func WithPerPageForBalances(perPage int) GetPersonalAccountBalancesOption {
 // WithSinceForBalances specifies a date to retrieve only records updated after this time (updated_at).
 // This parameter takes precedence over start_date and end_date parameters.
 // This is useful for incremental updates to avoid fetching all balances every time.
-func WithSinceForBalances(t time.Time) GetPersonalAccountBalancesOption {
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForBalances(since string) GetPersonalAccountBalancesOption {
 	return func(opts *getPersonalAccountBalancesOptions) {
-		opts.Since = &t
+		opts.Since = &since
 	}
 }
 
@@ -212,14 +214,13 @@ func WithSinceForBalances(t time.Time) GetPersonalAccountBalancesOption {
 //		log.Fatal(err)
 //	}
 //	for _, balance := range response.AccountBalances {
-//		fmt.Printf("Date: %s, Balance: %v, BalanceInBase: %v\n", balance.Date.Format("2006-01-02"), balance.Balance, balance.BalanceInBase)
+//		fmt.Printf("Date: %s, Balance: %v, BalanceInBase: %v\n", balance.Date, balance.Balance, balance.BalanceInBase)
 //	}
 //
 // Example with since parameter:
 //
-//	sinceTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 //	response, err := client.GetPersonalAccountBalances(ctx, accessToken, "account_key_123",
-//		moneytree.WithSinceForBalances(sinceTime),
+//		moneytree.WithSinceForBalances("2023-01-01"),
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-account-balances
@@ -236,11 +237,17 @@ func (c *Client) GetPersonalAccountBalances(ctx context.Context, accessToken str
 		opt(options)
 	}
 
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
 	urlPath := fmt.Sprintf("link/accounts/%s/balances.json", url.PathEscape(accountID))
 	queryParams := url.Values{}
 	applyPaginationParams(queryParams, &options.paginationOptions)
 	if options.Since != nil {
-		queryParams.Set("since", options.Since.Format("2006-01-02"))
+		queryParams.Set("since", *options.Since)
 	}
 	if len(queryParams) > 0 {
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())

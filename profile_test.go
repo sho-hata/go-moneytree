@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestGetProfile(t *testing.T) {
@@ -298,8 +297,8 @@ func TestGetAccountGroups(t *testing.T) {
 	t.Run("success case: account groups information is retrieved correctly", func(t *testing.T) {
 		t.Parallel()
 
-		lastAggregatedAt := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-		lastAggregatedSuccess := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		lastAggregatedAt := "2023-01-01"
+		lastAggregatedSuccess := "2023-01-01"
 		id := int64(123)
 		accountGroupID := int64(456)
 
@@ -309,7 +308,7 @@ func TestGetAccountGroups(t *testing.T) {
 					AggregationState:      "success",
 					AggregationStatus:     "success",
 					LastAggregatedAt:      lastAggregatedAt,
-					LastAggregatedSuccess: &lastAggregatedSuccess,
+					LastAggregatedSuccess: stringPtr(lastAggregatedSuccess),
 					ID:                    &id,
 					AccountGroup:          accountGroupID,
 					InstitutionEntityKey:  "test_institution_key",
@@ -368,13 +367,13 @@ func TestGetAccountGroups(t *testing.T) {
 		if ag.AggregationStatus != expectedResponse.AccountGroups[0].AggregationStatus {
 			t.Errorf("expected AggregationStatus %s, got %s", expectedResponse.AccountGroups[0].AggregationStatus, ag.AggregationStatus)
 		}
-		if !ag.LastAggregatedAt.Equal(expectedResponse.AccountGroups[0].LastAggregatedAt) {
-			t.Errorf("expected LastAggregatedAt %v, got %v", expectedResponse.AccountGroups[0].LastAggregatedAt, ag.LastAggregatedAt)
+		if ag.LastAggregatedAt != expectedResponse.AccountGroups[0].LastAggregatedAt {
+			t.Errorf("expected LastAggregatedAt %s, got %s", expectedResponse.AccountGroups[0].LastAggregatedAt, ag.LastAggregatedAt)
 		}
 		if ag.LastAggregatedSuccess == nil {
 			t.Error("expected LastAggregatedSuccess, got nil")
-		} else if !ag.LastAggregatedSuccess.Equal(*expectedResponse.AccountGroups[0].LastAggregatedSuccess) {
-			t.Errorf("expected LastAggregatedSuccess %v, got %v", *expectedResponse.AccountGroups[0].LastAggregatedSuccess, *ag.LastAggregatedSuccess)
+		} else if *ag.LastAggregatedSuccess != *expectedResponse.AccountGroups[0].LastAggregatedSuccess {
+			t.Errorf("expected LastAggregatedSuccess %s, got %s", *expectedResponse.AccountGroups[0].LastAggregatedSuccess, *ag.LastAggregatedSuccess)
 		}
 		if ag.AccountGroup != expectedResponse.AccountGroups[0].AccountGroup {
 			t.Errorf("expected AccountGroup %d, got %d", expectedResponse.AccountGroups[0].AccountGroup, ag.AccountGroup)
@@ -387,7 +386,7 @@ func TestGetAccountGroups(t *testing.T) {
 	t.Run("success case: account groups with null last_aggregated_success", func(t *testing.T) {
 		t.Parallel()
 
-		lastAggregatedAt := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		lastAggregatedAt := "2023-01-01"
 		accountGroupID := int64(456)
 
 		expectedResponse := AccountGroups{

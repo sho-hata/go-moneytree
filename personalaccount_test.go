@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestGetPersonalAccounts(t *testing.T) {
@@ -26,7 +25,7 @@ func TestGetPersonalAccounts(t *testing.T) {
 		balance1 := float64Ptr(100000.50)
 		balance2 := float64Ptr(-5000.00)
 		currency := stringPtr("JPY")
-		lastAggregatedAt := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		lastAggregatedAt := "2023-01-01"
 
 		expectedResponse := PersonalAccounts{
 			Accounts: []PersonalAccount{
@@ -39,7 +38,7 @@ func TestGetPersonalAccounts(t *testing.T) {
 					Name:                 name1,
 					Balance:              balance1,
 					Currency:             currency,
-					LastAggregatedAt:     &lastAggregatedAt,
+					LastAggregatedAt:     stringPtr(lastAggregatedAt),
 				},
 				{
 					ID:                   &id2,
@@ -50,7 +49,7 @@ func TestGetPersonalAccounts(t *testing.T) {
 					Name:                 name2,
 					Balance:              balance2,
 					Currency:             currency,
-					LastAggregatedAt:     &lastAggregatedAt,
+					LastAggregatedAt:     stringPtr(lastAggregatedAt),
 				},
 			},
 		}
@@ -519,6 +518,95 @@ func float64Ptr(f float64) *float64 {
 	return &f
 }
 
+func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
+	t.Parallel()
+
+	t.Run("error case: returns error when date format is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		invalidDates := []string{
+			"2023/01/01",
+			"2023-1-1",
+			"01-01-2023",
+			"2023-01-01T00:00:00Z",
+			"invalid",
+			"",
+		}
+
+		for _, invalidDate := range invalidDates {
+			invalidDate := invalidDate
+			t.Run(fmt.Sprintf("invalid date: %s", invalidDate), func(t *testing.T) {
+				t.Parallel()
+
+				baseURL, err := url.Parse("https://test.getmoneytree.com/")
+				if err != nil {
+					t.Fatalf("failed to parse base URL: %v", err)
+				}
+
+				client := &Client{
+					config: &Config{
+						BaseURL: baseURL,
+					},
+				}
+
+				_, err = client.GetPersonalAccountBalances(context.Background(), "test-token", "account_key_123",
+					WithSinceForBalances(invalidDate),
+				)
+				if err == nil {
+					t.Errorf("expected error for invalid date format: %s", invalidDate)
+				}
+				if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+					t.Errorf("expected error about date format, got: %v", err)
+				}
+			})
+		}
+	})
+
+	t.Run("success case: accepts valid date format", func(t *testing.T) {
+		t.Parallel()
+
+		validDates := []string{
+			"2023-01-01",
+			"2020-11-08",
+			"2000-12-31",
+		}
+
+		for _, validDate := range validDates {
+			validDate := validDate
+			t.Run(fmt.Sprintf("valid date: %s", validDate), func(t *testing.T) {
+				t.Parallel()
+
+				opt := WithSinceForBalances(validDate)
+				if opt == nil {
+					t.Error("expected non-nil option function")
+				}
+
+				// オプション関数が正常に適用されることを確認（エラーが発生しない）
+				baseURL, err := url.Parse("https://test.getmoneytree.com/")
+				if err != nil {
+					t.Fatalf("failed to parse base URL: %v", err)
+				}
+
+				client := &Client{
+					config: &Config{
+						BaseURL: baseURL,
+					},
+				}
+
+				// オプション関数を適用してもエラーが発生しないことを確認
+				// （実際のAPI呼び出しは失敗するが、日付フォーマットエラーではない）
+				_, err = client.GetPersonalAccountBalances(context.Background(), "test-token", "account_key_123",
+					opt,
+				)
+				// 日付フォーマットエラーではないことを確認
+				if err != nil && strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+					t.Errorf("unexpected date format error for valid date: %s, error: %v", validDate, err)
+				}
+			})
+		}
+	})
+}
+
 func TestGetPersonalAccountBalances(t *testing.T) {
 	t.Parallel()
 
@@ -533,8 +621,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		balance2 := 105000.75
 		balanceInBase1 := 100000.50
 		balanceInBase2 := 105000.75
-		date1 := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-		date2 := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+		date1 := "2023-01-01"
+		date2 := "2023-01-02"
 
 		expectedResponse := PersonalAccountBalances{
 			AccountBalances: []PersonalAccountBalance{
@@ -613,8 +701,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		if bal1.BalanceInBase != expectedResponse.AccountBalances[0].BalanceInBase {
 			t.Errorf("expected BalanceInBase %v, got %v", expectedResponse.AccountBalances[0].BalanceInBase, bal1.BalanceInBase)
 		}
-		if !bal1.Date.Equal(expectedResponse.AccountBalances[0].Date) {
-			t.Errorf("expected Date %v, got %v", expectedResponse.AccountBalances[0].Date, bal1.Date)
+		if bal1.Date != expectedResponse.AccountBalances[0].Date {
+			t.Errorf("expected Date %s, got %s", expectedResponse.AccountBalances[0].Date, bal1.Date)
 		}
 
 		bal2 := response.AccountBalances[1]
@@ -624,8 +712,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		if bal2.BalanceInBase != expectedResponse.AccountBalances[1].BalanceInBase {
 			t.Errorf("expected BalanceInBase %v, got %v", expectedResponse.AccountBalances[1].BalanceInBase, bal2.BalanceInBase)
 		}
-		if !bal2.Date.Equal(expectedResponse.AccountBalances[1].Date) {
-			t.Errorf("expected Date %v, got %v", expectedResponse.AccountBalances[1].Date, bal2.Date)
+		if bal2.Date != expectedResponse.AccountBalances[1].Date {
+			t.Errorf("expected Date %s, got %s", expectedResponse.AccountBalances[1].Date, bal2.Date)
 		}
 	})
 
@@ -633,12 +721,12 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		t.Parallel()
 
 		accountID := "account_key_123"
-		sinceTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		sinceTime := "2023-01-01"
 		id := int64(1)
 		accountIDValue := int64(123)
 		balance := 100000.50
 		balanceInBase := 100000.50
-		date := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+		date := "2023-01-02"
 
 		expectedResponse := PersonalAccountBalances{
 			AccountBalances: []PersonalAccountBalance{
@@ -653,10 +741,9 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		}
 
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			expectedSince := sinceTime.Format("2006-01-02")
 			actualSince := r.URL.Query().Get("since")
-			if actualSince != expectedSince {
-				t.Errorf("expected since parameter %s, got %s", expectedSince, actualSince)
+			if actualSince != sinceTime {
+				t.Errorf("expected since parameter %s, got %s", sinceTime, actualSince)
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -700,7 +787,7 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		accountIDValue := int64(123)
 		balance := 100000.50
 		balanceInBase := 100000.50
-		date := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
+		date := "2023-01-02"
 
 		expectedResponse := PersonalAccountBalances{
 			AccountBalances: []PersonalAccountBalance{

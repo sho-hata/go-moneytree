@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestGetInstitutions(t *testing.T) {
@@ -150,7 +150,7 @@ func TestGetInstitutions(t *testing.T) {
 	t.Run("success case: institutions list with since parameter", func(t *testing.T) {
 		t.Parallel()
 
-		sinceTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
+		sinceTime := "2023-01-01"
 		displayName := stringPtr("Test Bank 1")
 		status := stringPtr("active")
 
@@ -176,10 +176,9 @@ func TestGetInstitutions(t *testing.T) {
 			if r.URL.Path != "/link/institutions.json" {
 				t.Errorf("expected path /link/institutions.json, got %s", r.URL.Path)
 			}
-			expectedSince := sinceTime.Format("2006-01-02")
 			actualSince := r.URL.Query().Get("since")
-			if actualSince != expectedSince {
-				t.Errorf("expected since parameter %s, got %s", expectedSince, actualSince)
+			if actualSince != sinceTime {
+				t.Errorf("expected since parameter %s, got %s", sinceTime, actualSince)
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -340,6 +339,95 @@ func TestGetInstitutions(t *testing.T) {
 		}
 		if !strings.Contains(err.Error(), "context must be non-nil") {
 			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
+
+func TestWithSince_InvalidDateFormat(t *testing.T) {
+	t.Parallel()
+
+	t.Run("error case: returns error when date format is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		invalidDates := []string{
+			"2023/01/01",
+			"2023-1-1",
+			"01-01-2023",
+			"2023-01-01T00:00:00Z",
+			"invalid",
+			"",
+		}
+
+		for _, invalidDate := range invalidDates {
+			invalidDate := invalidDate
+			t.Run(fmt.Sprintf("invalid date: %s", invalidDate), func(t *testing.T) {
+				t.Parallel()
+
+				baseURL, err := url.Parse("https://test.getmoneytree.com/")
+				if err != nil {
+					t.Fatalf("failed to parse base URL: %v", err)
+				}
+
+				client := &Client{
+					config: &Config{
+						BaseURL: baseURL,
+					},
+				}
+
+				_, err = client.GetInstitutions(context.Background(), "test-token",
+					WithSince(invalidDate),
+				)
+				if err == nil {
+					t.Errorf("expected error for invalid date format: %s", invalidDate)
+				}
+				if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+					t.Errorf("expected error about date format, got: %v", err)
+				}
+			})
+		}
+	})
+
+	t.Run("success case: accepts valid date format", func(t *testing.T) {
+		t.Parallel()
+
+		validDates := []string{
+			"2023-01-01",
+			"2020-11-08",
+			"2000-12-31",
+		}
+
+		for _, validDate := range validDates {
+			validDate := validDate
+			t.Run(fmt.Sprintf("valid date: %s", validDate), func(t *testing.T) {
+				t.Parallel()
+
+				opt := WithSince(validDate)
+				if opt == nil {
+					t.Error("expected non-nil option function")
+				}
+
+				// オプション関数が正常に適用されることを確認（エラーが発生しない）
+				baseURL, err := url.Parse("https://test.getmoneytree.com/")
+				if err != nil {
+					t.Fatalf("failed to parse base URL: %v", err)
+				}
+
+				client := &Client{
+					config: &Config{
+						BaseURL: baseURL,
+					},
+				}
+
+				// オプション関数を適用してもエラーが発生しないことを確認
+				// （実際のAPI呼び出しは失敗するが、日付フォーマットエラーではない）
+				_, err = client.GetInstitutions(context.Background(), "test-token",
+					opt,
+				)
+				// 日付フォーマットエラーではないことを確認
+				if err != nil && strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+					t.Errorf("unexpected date format error for valid date: %s, error: %v", validDate, err)
+				}
+			})
 		}
 	})
 }

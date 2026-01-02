@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // Profile represents the user profile information returned by the Moneytree LINK API.
@@ -71,10 +70,12 @@ type AccountGroup struct {
 	// For a list of possible values and their meanings, refer to the aggregation_status list guide.
 	AggregationStatus string `json:"aggregation_status"`
 	// LastAggregatedAt is the last time data was acquired.
-	LastAggregatedAt time.Time `json:"last_aggregated_at"`
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	LastAggregatedAt string `json:"last_aggregated_at"`
 	// LastAggregatedSuccess is the last time data was successfully acquired.
 	// This value is null if data has never been successfully acquired.
-	LastAggregatedSuccess *time.Time `json:"last_aggregated_success"`
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	LastAggregatedSuccess *string `json:"last_aggregated_success"`
 	// ID is the account group ID.
 	// Deprecated: Use AccountGroup instead.
 	ID *int64 `json:"id,omitempty"`

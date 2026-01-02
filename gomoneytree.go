@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // RequestOption configures a request.
@@ -198,4 +199,12 @@ func sanitizeURL(uri *url.URL) *url.URL {
 	}
 	uri.RawQuery = params.Encode()
 	return uri
+}
+
+// validateDateFormat validates that the date string is in the format "2006-01-02" (YYYY-MM-DD).
+func validateDateFormat(date string) error {
+	if _, err := time.Parse("2006-01-02", date); err != nil {
+		return fmt.Errorf("date must be in format YYYY-MM-DD (e.g., 2020-11-08), got: %s", date)
+	}
+	return nil
 }
