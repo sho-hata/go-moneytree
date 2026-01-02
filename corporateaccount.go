@@ -193,3 +193,171 @@ func (c *Client) GetCorporateAccounts(ctx context.Context, accessToken string, o
 	}
 	return &res, nil
 }
+
+// CorporateAccountBalance represents a balance record for a corporate account returned by the Moneytree LINK API.
+type CorporateAccountBalance struct {
+	// ID is the balance record ID.
+	ID int64 `json:"id"`
+	// AccountID is the account ID.
+	AccountID int64 `json:"account_id"`
+	// Date is the date when the balance was confirmed on the financial institution's website.
+	// Format: "2006-01-02" (YYYY-MM-DD).
+	Date string `json:"date"`
+	// Balance is the account balance.
+	Balance float64 `json:"balance"`
+	// BalanceInBase is the account balance converted to JPY.
+	// If the financial service provides the converted amount for foreign currency,
+	// that amount is stored and returned in this field. If not supported,
+	// it is calculated using the exchange rate used by Moneytree.
+	BalanceInBase float64 `json:"balance_in_base"`
+}
+
+// CorporateAccountBalances represents the response from the corporate account balances endpoint.
+type CorporateAccountBalances struct {
+	// AccountBalances is a list of balance records for the account.
+	AccountBalances []CorporateAccountBalance `json:"account_balances"`
+}
+
+// GetCorporateAccountBalancesOption configures options for the GetCorporateAccountBalances API call.
+type GetCorporateAccountBalancesOption func(*getCorporateAccountBalancesOptions)
+
+type getCorporateAccountBalancesOptions struct {
+	paginationOptions
+	SortKey *string
+	SortBy  *string
+	Since   *string
+}
+
+// WithPageForCorporateBalances specifies the page number for pagination.
+// Page numbers start from 1. The default value is 1.
+// Valid range is 1 to 100000.
+func WithPageForCorporateBalances(page int) GetCorporateAccountBalancesOption {
+	return func(opts *getCorporateAccountBalancesOptions) {
+		opts.Page = &page
+	}
+}
+
+// WithPerPageForCorporateBalances specifies the number of items per page.
+// The default value is 500. Valid range is 1 to 500.
+func WithPerPageForCorporateBalances(perPage int) GetCorporateAccountBalancesOption {
+	return func(opts *getCorporateAccountBalancesOptions) {
+		opts.PerPage = &perPage
+	}
+}
+
+// WithSortKeyForCorporateBalances specifies the sort key for balance records.
+// If not provided, the database's id key is used by default.
+// Using sort_key may affect response time, so it is recommended to use it only when necessary.
+// If "date" is specified as the sort key, the database sorts by the balance date
+// (which is the actual balance date, not the date Moneytree obtained it).
+// The default value is "id".
+func WithSortKeyForCorporateBalances(sortKey string) GetCorporateAccountBalancesOption {
+	return func(opts *getCorporateAccountBalancesOptions) {
+		opts.SortKey = &sortKey
+	}
+}
+
+// WithSortByForCorporateBalances specifies the sort order.
+// Possible values: "asc" (ascending, default), "desc" (descending).
+// The default value is "asc".
+func WithSortByForCorporateBalances(sortBy string) GetCorporateAccountBalancesOption {
+	return func(opts *getCorporateAccountBalancesOptions) {
+		opts.SortBy = &sortBy
+	}
+}
+
+// WithSinceForCorporateBalances specifies a date to retrieve only records updated after this time (updated_at).
+// This parameter takes precedence over start_date and end_date parameters.
+// This is useful for incremental updates to avoid fetching all balances every time.
+// Date format: "2006-01-02" (YYYY-MM-DD).
+func WithSinceForCorporateBalances(since string) GetCorporateAccountBalancesOption {
+	return func(opts *getCorporateAccountBalancesOptions) {
+		opts.Since = &since
+	}
+}
+
+// GetCorporateAccountBalances retrieves the balance history for a specific corporate account.
+// This endpoint requires the accounts_read OAuth scope.
+//
+// This API returns balance records for the specified account. The balance history
+// can be used to track changes in account balance over time.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetCorporateAccountBalances(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, balance := range response.AccountBalances {
+//		fmt.Printf("Date: %s, Balance: %v, BalanceInBase: %v\n", balance.Date, balance.Balance, balance.BalanceInBase)
+//	}
+//
+// Example with pagination and sorting:
+//
+//	response, err := client.GetCorporateAccountBalances(ctx, accessToken, "account_key_123",
+//		moneytree.WithPageForCorporateBalances(1),
+//		moneytree.WithPerPageForCorporateBalances(100),
+//		moneytree.WithSortKeyForCorporateBalances("date"),
+//		moneytree.WithSortByForCorporateBalances("desc"),
+//	)
+//
+// Example with since parameter:
+//
+//	response, err := client.GetCorporateAccountBalances(ctx, accessToken, "account_key_123",
+//		moneytree.WithSinceForCorporateBalances("2023-01-01"),
+//	)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-corporate-account-balances
+func (c *Client) GetCorporateAccountBalances(ctx context.Context, accessToken string, accountID string, opts ...GetCorporateAccountBalancesOption) (*CorporateAccountBalances, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	options := &getCorporateAccountBalancesOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	if options.Since != nil {
+		if err := validateDateFormat(*options.Since); err != nil {
+			return nil, err
+		}
+	}
+
+	if options.SortBy != nil {
+		if *options.SortBy != "asc" && *options.SortBy != "desc" {
+			return nil, fmt.Errorf("sort_by must be 'asc' or 'desc', got: %s", *options.SortBy)
+		}
+	}
+
+	urlPath := fmt.Sprintf("link/corporate/accounts/%s/balances.json", url.PathEscape(accountID))
+	queryParams := url.Values{}
+	applyPaginationParams(queryParams, &options.paginationOptions)
+	if options.SortKey != nil {
+		queryParams.Set("sort_key", *options.SortKey)
+	}
+	if options.SortBy != nil {
+		queryParams.Set("sort_by", *options.SortBy)
+	}
+	if options.Since != nil {
+		queryParams.Set("since", *options.Since)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res CorporateAccountBalances
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
