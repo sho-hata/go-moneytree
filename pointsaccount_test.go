@@ -1,0 +1,435 @@
+package moneytree
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"testing"
+)
+
+func TestGetPointAccounts(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: point accounts list is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		id1 := int64(123)
+		id2 := int64(456)
+		balance1 := float64Ptr(10000.50)
+		balance2 := float64Ptr(5000.00)
+		lastAggregatedAt := "2023-01-01T00:00:00Z"
+		lastAggregatedSuccess := "2023-01-01T00:00:00Z"
+		createdAt := "2023-01-01T00:00:00Z"
+		updatedAt := "2023-01-01T00:00:00Z"
+
+		expectedResponse := PointAccounts{
+			PointAccounts: []PointAccount{
+				{
+					ID:                     id1,
+					AccountGroup:           789,
+					AccountType:            "point",
+					Currency:               "JPY",
+					InstitutionEntityKey:   "test_point_1",
+					InstitutionAccountName: "ポイントカード",
+					Nickname:               "ポイントカード",
+					CurrentBalance:         balance1,
+					AggregationState:       "success",
+					AggregationStatus:      "success",
+					LastAggregatedAt:       lastAggregatedAt,
+					LastAggregatedSuccess:  stringPtr(lastAggregatedSuccess),
+					CreatedAt:              createdAt,
+					UpdatedAt:              updatedAt,
+				},
+				{
+					ID:                     id2,
+					AccountGroup:           789,
+					AccountType:            "point",
+					Currency:               "JPY",
+					InstitutionEntityKey:   "test_point_2",
+					InstitutionAccountName: "クレジットカードポイント",
+					Nickname:               "クレジットカードポイント",
+					CurrentBalance:         balance2,
+					AggregationState:       "success",
+					AggregationStatus:      "success",
+					LastAggregatedAt:       lastAggregatedAt,
+					LastAggregatedSuccess:  stringPtr(lastAggregatedSuccess),
+					CreatedAt:              createdAt,
+					UpdatedAt:              updatedAt,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/points/accounts.json" {
+				t.Errorf("expected path /link/points/accounts.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccounts(context.Background(), "test-access-token")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointAccounts) != 2 {
+			t.Fatalf("expected 2 point accounts, got %d", len(response.PointAccounts))
+		}
+
+		account1 := response.PointAccounts[0]
+		if account1.ID != expectedResponse.PointAccounts[0].ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.PointAccounts[0].ID, account1.ID)
+		}
+		if account1.AccountGroup != expectedResponse.PointAccounts[0].AccountGroup {
+			t.Errorf("expected AccountGroup %d, got %d", expectedResponse.PointAccounts[0].AccountGroup, account1.AccountGroup)
+		}
+		if account1.AccountType != expectedResponse.PointAccounts[0].AccountType {
+			t.Errorf("expected AccountType %s, got %s", expectedResponse.PointAccounts[0].AccountType, account1.AccountType)
+		}
+		if account1.Currency != expectedResponse.PointAccounts[0].Currency {
+			t.Errorf("expected Currency %s, got %s", expectedResponse.PointAccounts[0].Currency, account1.Currency)
+		}
+		if account1.InstitutionEntityKey != expectedResponse.PointAccounts[0].InstitutionEntityKey {
+			t.Errorf("expected InstitutionEntityKey %s, got %s", expectedResponse.PointAccounts[0].InstitutionEntityKey, account1.InstitutionEntityKey)
+		}
+		if account1.InstitutionAccountName != expectedResponse.PointAccounts[0].InstitutionAccountName {
+			t.Errorf("expected InstitutionAccountName %s, got %s", expectedResponse.PointAccounts[0].InstitutionAccountName, account1.InstitutionAccountName)
+		}
+		if account1.Nickname != expectedResponse.PointAccounts[0].Nickname {
+			t.Errorf("expected Nickname %s, got %s", expectedResponse.PointAccounts[0].Nickname, account1.Nickname)
+		}
+		if account1.CurrentBalance == nil || *account1.CurrentBalance != *expectedResponse.PointAccounts[0].CurrentBalance {
+			t.Errorf("expected CurrentBalance %v, got %v", *expectedResponse.PointAccounts[0].CurrentBalance, account1.CurrentBalance)
+		}
+		if account1.AggregationState != expectedResponse.PointAccounts[0].AggregationState {
+			t.Errorf("expected AggregationState %s, got %s", expectedResponse.PointAccounts[0].AggregationState, account1.AggregationState)
+		}
+		if account1.AggregationStatus != expectedResponse.PointAccounts[0].AggregationStatus {
+			t.Errorf("expected AggregationStatus %s, got %s", expectedResponse.PointAccounts[0].AggregationStatus, account1.AggregationStatus)
+		}
+		if account1.LastAggregatedAt != expectedResponse.PointAccounts[0].LastAggregatedAt {
+			t.Errorf("expected LastAggregatedAt %s, got %s", expectedResponse.PointAccounts[0].LastAggregatedAt, account1.LastAggregatedAt)
+		}
+		if account1.LastAggregatedSuccess == nil || *account1.LastAggregatedSuccess != *expectedResponse.PointAccounts[0].LastAggregatedSuccess {
+			t.Errorf("expected LastAggregatedSuccess %v, got %v", *expectedResponse.PointAccounts[0].LastAggregatedSuccess, account1.LastAggregatedSuccess)
+		}
+		if account1.CreatedAt != expectedResponse.PointAccounts[0].CreatedAt {
+			t.Errorf("expected CreatedAt %s, got %s", expectedResponse.PointAccounts[0].CreatedAt, account1.CreatedAt)
+		}
+		if account1.UpdatedAt != expectedResponse.PointAccounts[0].UpdatedAt {
+			t.Errorf("expected UpdatedAt %s, got %s", expectedResponse.PointAccounts[0].UpdatedAt, account1.UpdatedAt)
+		}
+
+		account2 := response.PointAccounts[1]
+		if account2.ID != expectedResponse.PointAccounts[1].ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.PointAccounts[1].ID, account2.ID)
+		}
+		if account2.AccountType != expectedResponse.PointAccounts[1].AccountType {
+			t.Errorf("expected AccountType %s, got %s", expectedResponse.PointAccounts[1].AccountType, account2.AccountType)
+		}
+		if account2.CurrentBalance == nil || *account2.CurrentBalance != *expectedResponse.PointAccounts[1].CurrentBalance {
+			t.Errorf("expected CurrentBalance %v, got %v", *expectedResponse.PointAccounts[1].CurrentBalance, account2.CurrentBalance)
+		}
+	})
+
+	t.Run("success case: point accounts list with null balance", func(t *testing.T) {
+		t.Parallel()
+
+		lastAggregatedAt := "2023-01-01T00:00:00Z"
+		createdAt := "2023-01-01T00:00:00Z"
+		updatedAt := "2023-01-01T00:00:00Z"
+
+		expectedResponse := PointAccounts{
+			PointAccounts: []PointAccount{
+				{
+					ID:                     123,
+					AccountGroup:           789,
+					AccountType:            "point",
+					Currency:               "JPY",
+					InstitutionEntityKey:   "test_point_1",
+					InstitutionAccountName: "ポイントカード",
+					Nickname:               "ポイントカード",
+					CurrentBalance:         nil,
+					AggregationState:       "error",
+					AggregationStatus:      "error.temporary",
+					LastAggregatedAt:       lastAggregatedAt,
+					LastAggregatedSuccess:  nil,
+					CreatedAt:              createdAt,
+					UpdatedAt:              updatedAt,
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccounts(context.Background(), "test-access-token")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointAccounts) != 1 {
+			t.Fatalf("expected 1 point account, got %d", len(response.PointAccounts))
+		}
+		if response.PointAccounts[0].CurrentBalance != nil {
+			t.Errorf("expected CurrentBalance nil, got %v", response.PointAccounts[0].CurrentBalance)
+		}
+		if response.PointAccounts[0].LastAggregatedSuccess != nil {
+			t.Errorf("expected LastAggregatedSuccess nil, got %v", response.PointAccounts[0].LastAggregatedSuccess)
+		}
+	})
+
+	t.Run("success case: point accounts list with pagination", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointAccounts{
+			PointAccounts: []PointAccount{
+				{
+					ID:                     123,
+					AccountGroup:           789,
+					AccountType:            "point",
+					Currency:               "JPY",
+					InstitutionEntityKey:   "test_point_1",
+					InstitutionAccountName: "ポイントカード",
+					Nickname:               "ポイントカード",
+					AggregationState:       "success",
+					AggregationStatus:      "success",
+					LastAggregatedAt:       "2023-01-01T00:00:00Z",
+					CreatedAt:              "2023-01-01T00:00:00Z",
+					UpdatedAt:              "2023-01-01T00:00:00Z",
+				},
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Query().Get("page") != "2" {
+				t.Errorf("expected page=2, got %s", r.URL.Query().Get("page"))
+			}
+			if r.URL.Query().Get("per_page") != "100" {
+				t.Errorf("expected per_page=100, got %s", r.URL.Query().Get("per_page"))
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccounts(context.Background(), "test-access-token",
+			WithPageForPointAccounts(2),
+			WithPerPageForPointAccounts(100),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointAccounts) != 1 {
+			t.Fatalf("expected 1 point account, got %d", len(response.PointAccounts))
+		}
+	})
+
+	t.Run("error case: access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: &url.URL{
+					Scheme: "https",
+					Host:   "jp-api-staging.getmoneytree.com",
+				},
+			},
+		}
+
+		_, err := client.GetPointAccounts(context.Background(), "")
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error message to contain 'access token is required', got %v", err)
+		}
+	})
+
+	t.Run("error case: HTTP error response", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			errorResponse := map[string]interface{}{
+				"error":             "invalid_token",
+				"error_description": "The access token provided is invalid.",
+			}
+			if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
+				t.Errorf("failed to encode error response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointAccounts(context.Background(), "invalid-token")
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Fatalf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+	})
+
+	t.Run("error case: invalid JSON response", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if _, err := w.Write([]byte("invalid json")); err != nil {
+				t.Errorf("failed to write response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetPointAccounts(context.Background(), "test-access-token")
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+	})
+
+	t.Run("success case: empty point accounts list", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := PointAccounts{
+			PointAccounts: []PointAccount{},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetPointAccounts(context.Background(), "test-access-token")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if len(response.PointAccounts) != 0 {
+			t.Fatalf("expected 0 point accounts, got %d", len(response.PointAccounts))
+		}
+	})
+}
+
