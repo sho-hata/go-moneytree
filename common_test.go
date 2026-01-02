@@ -269,3 +269,423 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 	})
 }
 
+func TestGetAccountDueBalances(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: due balance is retrieved correctly", func(t *testing.T) {
+		t.Parallel()
+
+		dueAmount := 50000.00
+		expectedResponse := AccountDueBalances{
+			DueBalances: AccountDueBalance{
+				ID:        123,
+				AccountID: 456,
+				Date:      "2023-12-01",
+				DueAmount: &dueAmount,
+				DueDate:   "2023-12-25",
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				t.Errorf("expected method %s, got %s", http.MethodGet, r.Method)
+			}
+			if r.URL.Path != "/link/accounts/account_key_123/due_balances.json" {
+				t.Errorf("expected path /link/accounts/account_key_123/due_balances.json, got %s", r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.DueBalances.ID != expectedResponse.DueBalances.ID {
+			t.Errorf("expected ID %d, got %d", expectedResponse.DueBalances.ID, response.DueBalances.ID)
+		}
+		if response.DueBalances.AccountID != expectedResponse.DueBalances.AccountID {
+			t.Errorf("expected AccountID %d, got %d", expectedResponse.DueBalances.AccountID, response.DueBalances.AccountID)
+		}
+		if response.DueBalances.Date != expectedResponse.DueBalances.Date {
+			t.Errorf("expected Date %s, got %s", expectedResponse.DueBalances.Date, response.DueBalances.Date)
+		}
+		if response.DueBalances.DueDate != expectedResponse.DueBalances.DueDate {
+			t.Errorf("expected DueDate %s, got %s", expectedResponse.DueBalances.DueDate, response.DueBalances.DueDate)
+		}
+		if response.DueBalances.DueAmount == nil || *response.DueBalances.DueAmount != *expectedResponse.DueBalances.DueAmount {
+			t.Errorf("expected DueAmount %v, got %v", expectedResponse.DueBalances.DueAmount, response.DueBalances.DueAmount)
+		}
+	})
+
+	t.Run("success case: due balance with null due_amount", func(t *testing.T) {
+		t.Parallel()
+
+		expectedResponse := AccountDueBalances{
+			DueBalances: AccountDueBalance{
+				ID:        123,
+				AccountID: 456,
+				Date:      "2023-12-01",
+				DueAmount: nil,
+				DueDate:   "2023-12-25",
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123")
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.DueBalances.DueAmount != nil {
+			t.Errorf("expected DueAmount nil, got %v", response.DueBalances.DueAmount)
+		}
+	})
+
+	t.Run("success case: due balance with since parameter", func(t *testing.T) {
+		t.Parallel()
+
+		dueAmount := 50000.00
+		expectedResponse := AccountDueBalances{
+			DueBalances: AccountDueBalance{
+				ID:        123,
+				AccountID: 456,
+				Date:      "2023-12-01",
+				DueAmount: &dueAmount,
+				DueDate:   "2023-12-25",
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedSince := "2023-01-01"
+			actualSince := r.URL.Query().Get("since")
+			if actualSince != expectedSince {
+				t.Errorf("expected since parameter %s, got %s", expectedSince, actualSince)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123",
+			WithSinceForDueBalances("2023-01-01"),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.DueBalances.DueDate != "2023-12-25" {
+			t.Errorf("expected DueDate 2023-12-25, got %s", response.DueBalances.DueDate)
+		}
+	})
+
+	t.Run("success case: due balance with page parameter", func(t *testing.T) {
+		t.Parallel()
+
+		dueAmount := 50000.00
+		expectedResponse := AccountDueBalances{
+			DueBalances: AccountDueBalance{
+				ID:        123,
+				AccountID: 456,
+				Date:      "2023-12-01",
+				DueAmount: &dueAmount,
+				DueDate:   "2023-12-25",
+			},
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			expectedPage := "2"
+			actualPage := r.URL.Query().Get("page")
+			if actualPage != expectedPage {
+				t.Errorf("expected page parameter %s, got %s", expectedPage, actualPage)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123",
+			WithPageForDueBalances(2),
+		)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetAccountDueBalances(context.Background(), "", "account_key_123")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "")
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "account ID is required") {
+			t.Errorf("expected error about account ID, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when start_date is specified without end_date", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "account_key_123",
+			WithStartDateForDueBalances("2023-01-01"),
+		)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "end_date is required when start_date is specified") {
+			t.Errorf("expected error about end_date, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when end_date is specified without start_date", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "account_key_123",
+			WithEndDateForDueBalances("2023-12-31"),
+		)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "start_date is required when end_date is specified") {
+			t.Errorf("expected error about start_date, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when since date format is invalid", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "account_key_123",
+			WithSinceForDueBalances("2023/01/01"),
+		)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
+			t.Errorf("expected error about date format, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error": "invalid_token", "error_description": "The access token is invalid or expired."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.GetAccountDueBalances(context.Background(), "invalid-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_token") {
+			t.Errorf("expected error about invalid_token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		accountID := "account_key_123"
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.GetAccountDueBalances(nil, "test-token", accountID)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
+
