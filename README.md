@@ -10,8 +10,6 @@ go get github.com/sho-hata/go-moneytree
 
 ## Usage
 
-### Authentication
-
 Moneytree LINK API uses OAuth 2.0 for authentication. You need to obtain an access token through the OAuth flow.
 
 For detailed authentication flow, please refer to the [Moneytree LINK API documentation](https://docs.link.getmoneytree.com/docs/product-and-tech-overview).
@@ -23,49 +21,32 @@ if err != nil {
     log.Fatal(err)
 }
 
-// Use access token obtained through OAuth flow
-accessToken := "your-access-token"
-```
+// Set client credentials (obtain from Moneytree)
+client.config.ClientID = "your-client-id"
+client.config.ClientSecret = "your-client-secret"
 
-### API call
+// Retrieve access token using authorization code from OAuth flow
+grantType := "authorization_code"
+code := "authorization-code-from-oauth-flow"
+redirectURI := "https://your-app.com/callback"
+request := &moneytree.RetrieveTokenRequest{
+    GrantType:   &grantType,
+    Code:        &code,
+    RedirectURI: &redirectURI,
+}
 
-#### Get profile
-
-```go
-// Initialize client
-client, err := moneytree.NewClient("jp-api-staging")
+token, err := client.RetrieveToken(ctx, request)
 if err != nil {
     log.Fatal(err)
 }
 
-// Get user profile
-profile, err := client.GetProfile(ctx, accessToken)
+// Get user profile using the access token
+profile, err := client.GetProfile(ctx, *token.AccessToken)
 if err != nil {
     log.Fatal(err)
 }
 
 fmt.Printf("Moneytree ID: %s, Email: %s\n", profile.MoneytreeID, profile.Email)
-```
-
-#### Get transactions
-
-```go
-// Initialize client
-client, err := moneytree.NewClient("jp-api-staging")
-if err != nil {
-    log.Fatal(err)
-}
-
-// Get transactions for a specific account
-response, err := client.GetPersonalAccountTransactions(ctx, accessToken, "account_key_123")
-if err != nil {
-    log.Fatal(err)
-}
-
-for _, transaction := range response.Transactions {
-    fmt.Printf("Date: %s, Amount: %v, Description: %s\n", 
-        transaction.Date, transaction.Amount, *transaction.DescriptionPretty)
-}
 ```
 
 ## API availability
