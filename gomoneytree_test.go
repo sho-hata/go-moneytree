@@ -3,11 +3,14 @@ package moneytree
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSanitizeURL(t *testing.T) {
@@ -335,6 +338,249 @@ func TestWithBearerToken(t *testing.T) {
 		expectedAuthHeader := "Bearer test-access-token"
 		if req.Header.Get("Authorization") != expectedAuthHeader {
 			t.Errorf("expected Authorization header %s, got %s", expectedAuthHeader, req.Header.Get("Authorization"))
+		}
+	})
+}
+
+func TestDo_RetryOnRateLimit(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: retries on HTTP 429 and succeeds", func(t *testing.T) {
+		t.Parallel()
+
+		attemptCount := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attemptCount++
+			if attemptCount < 2 {
+				// Return 429 on first attempt
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_, _ = w.Write([]byte(`{"error": "rate_limit_exceeded", "error_description": "Too many requests"}`))
+			} else {
+				// Return success on retry
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`{"status": "ok"}`))
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+			retryConfig: RetryConfig{
+				MaxRetries: 3,
+				BaseDelay:  10 * time.Millisecond, // Short delay for testing
+				Enabled:   true,
+			},
+		}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+
+		var result map[string]string
+		resp, err := client.Do(context.Background(), req, &result)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
+		}
+
+		if attemptCount != 2 {
+			t.Errorf("expected 2 attempts, got %d", attemptCount)
+		}
+
+		if result["status"] != "ok" {
+			t.Errorf("expected status 'ok', got %v", result)
+		}
+	})
+
+	t.Run("success case: retries exhausted returns error", func(t *testing.T) {
+		t.Parallel()
+
+		attemptCount := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attemptCount++
+			// Always return 429
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(`{"error": "rate_limit_exceeded", "error_description": "Too many requests"}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+			retryConfig: RetryConfig{
+				MaxRetries: 2,
+				BaseDelay:  10 * time.Millisecond, // Short delay for testing
+				Enabled:   true,
+			},
+		}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+
+		resp, err := client.Do(context.Background(), req, nil)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+
+		if apiErr.StatusCode != http.StatusTooManyRequests {
+			t.Errorf("expected status code %d, got %d", http.StatusTooManyRequests, apiErr.StatusCode)
+		}
+
+		// Should have attempted MaxRetries + 1 times (initial + retries)
+		expectedAttempts := 2 + 1 // MaxRetries + initial attempt
+		if attemptCount != expectedAttempts {
+			t.Errorf("expected %d attempts, got %d", expectedAttempts, attemptCount)
+		}
+
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
+	})
+
+	t.Run("success case: retry disabled does not retry", func(t *testing.T) {
+		t.Parallel()
+
+		attemptCount := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attemptCount++
+			// Return 429
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = w.Write([]byte(`{"error": "rate_limit_exceeded", "error_description": "Too many requests"}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+			retryConfig: RetryConfig{
+				MaxRetries: 3,
+				BaseDelay:  10 * time.Millisecond,
+				Enabled:   false, // Retry disabled
+			},
+		}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+
+		resp, err := client.Do(context.Background(), req, nil)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+
+		if apiErr.StatusCode != http.StatusTooManyRequests {
+			t.Errorf("expected status code %d, got %d", http.StatusTooManyRequests, apiErr.StatusCode)
+		}
+
+		// Should only attempt once (no retry)
+		if attemptCount != 1 {
+			t.Errorf("expected 1 attempt, got %d", attemptCount)
+		}
+
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
+		}
+	})
+
+	t.Run("success case: non-429 errors are not retried", func(t *testing.T) {
+		t.Parallel()
+
+		attemptCount := 0
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attemptCount++
+			// Return 401 (not retried)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error": "invalid_token", "error_description": "Invalid token"}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+			retryConfig: RetryConfig{
+				MaxRetries: 3,
+				BaseDelay:  10 * time.Millisecond,
+				Enabled:   true,
+			},
+		}
+
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, nil)
+		if err != nil {
+			t.Fatalf("failed to create request: %v", err)
+		}
+
+		resp, err := client.Do(context.Background(), req, nil)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+
+		if apiErr.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
+		}
+
+		// Should only attempt once (non-429 errors are not retried)
+		if attemptCount != 1 {
+			t.Errorf("expected 1 attempt, got %d", attemptCount)
+		}
+
+		if resp != nil && resp.Body != nil {
+			_ = resp.Body.Close()
 		}
 	})
 }
