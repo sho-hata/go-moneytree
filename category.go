@@ -282,3 +282,35 @@ func (c *Client) UpdateCategory(ctx context.Context, accessToken string, categor
 	}
 	return &res, nil
 }
+
+// DeleteCategory deletes a category.
+// This endpoint requires the transactions_write OAuth scope.
+//
+// This API deletes an existing category for the guest user.
+// Only user-created categories (IsSystem == false) can be deleted.
+//
+// Example:
+//
+//	err := client.DeleteCategory(ctx, accessToken, 123)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+// Reference: https://docs.link.getmoneytree.com/reference/delete-link-category
+func (c *Client) DeleteCategory(ctx context.Context, accessToken string, categoryID int64) error {
+	if accessToken == "" {
+		return fmt.Errorf("access token is required")
+	}
+
+	urlPath := fmt.Sprintf("link/categories/%d.json", categoryID)
+
+	httpReq, err := c.NewRequest(ctx, http.MethodDelete, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if _, err = c.Do(ctx, httpReq, nil); err != nil {
+		return err
+	}
+	return nil
+}
