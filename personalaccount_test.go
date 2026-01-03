@@ -86,7 +86,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -169,7 +170,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -218,7 +220,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -285,7 +288,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccounts(context.Background(), "test-access-token", WithPage(2))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccounts(context.Background(), WithPage(2))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -346,7 +350,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccounts(context.Background(), "test-access-token", WithPerPage(100))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccounts(context.Background(), WithPerPage(100))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -413,7 +418,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccounts(context.Background(), "test-access-token", WithPage(3), WithPerPage(50))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccounts(context.Background(), WithPage(3), WithPerPage(50))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -440,7 +446,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccounts(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetPersonalAccounts(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -471,7 +478,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccounts(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetPersonalAccounts(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -504,7 +512,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetPersonalAccounts(nil, "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccounts(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -549,7 +558,8 @@ func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
 					},
 				}
 
-				_, err = client.GetPersonalAccountBalances(context.Background(), "test-token", "account_key_123",
+				setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123",
 					WithSinceForBalances(invalidDate),
 				)
 				if err == nil {
@@ -596,7 +606,8 @@ func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
 
 				// オプション関数を適用してもエラーが発生しないことを確認
 				// （実際のAPI呼び出しは失敗するが、日付フォーマットエラーではない）
-				_, err = client.GetPersonalAccountBalances(context.Background(), "test-token", "account_key_123",
+				setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123",
 					opt,
 				)
 				// 日付フォーマットエラーではないことを確認
@@ -677,7 +688,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountBalances(context.Background(), accountID)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -767,7 +779,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID, WithSinceForBalances(sinceTime))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountBalances(context.Background(), accountID, WithSinceForBalances(sinceTime))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -835,7 +848,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID,
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountBalances(context.Background(), accountID,
 			WithPageForBalances(2),
 			WithPerPageForBalances(50),
 		)
@@ -881,7 +895,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountBalances(context.Background(), "test-access-token", accountID)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountBalances(context.Background(), accountID)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -908,12 +923,13 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountBalances(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -931,7 +947,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountBalances(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccountBalances(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -964,7 +981,8 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountBalances(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetPersonalAccountBalances(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -998,8 +1016,9 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetPersonalAccountBalances(nil, "test-token", accountID)
+		_, err = client.GetPersonalAccountBalances(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1076,7 +1095,8 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetTermDeposits(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetTermDeposits(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1140,7 +1160,8 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetTermDeposits(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetTermDeposits(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1208,7 +1229,8 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetTermDeposits(context.Background(), "test-access-token", "account_key_123", WithPageForTermDeposits(2))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetTermDeposits(context.Background(), "account_key_123", WithPageForTermDeposits(2))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1235,12 +1257,13 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetTermDeposits(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetTermDeposits(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -1258,7 +1281,8 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetTermDeposits(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetTermDeposits(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1291,7 +1315,8 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetTermDeposits(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetTermDeposits(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1325,8 +1350,9 @@ func TestGetTermDeposits(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetTermDeposits(nil, "test-token", accountID)
+		_, err = client.GetTermDeposits(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1398,7 +1424,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountTransactions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountTransactions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1456,7 +1483,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountTransactions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountTransactions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1525,7 +1553,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountTransactions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountTransactions(context.Background(), "account_key_123",
 			WithPageForTransactions(2),
 			WithPerPageForTransactions(100),
 		)
@@ -1591,7 +1620,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountTransactions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountTransactions(context.Background(), "account_key_123",
 			WithSortKeyForTransactions("date"),
 			WithSortByForTransactions("desc"),
 		)
@@ -1652,7 +1682,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPersonalAccountTransactions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPersonalAccountTransactions(context.Background(), "account_key_123",
 			WithSinceForTransactions("2023-01-01"),
 		)
 		if err != nil {
@@ -1681,12 +1712,13 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountTransactions(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetPersonalAccountTransactions(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -1704,7 +1736,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountTransactions(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccountTransactions(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1727,7 +1760,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountTransactions(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccountTransactions(context.Background(), "account_key_123",
 			WithSortByForTransactions("invalid"),
 		)
 		if err == nil {
@@ -1752,7 +1786,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountTransactions(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetPersonalAccountTransactions(context.Background(), "account_key_123",
 			WithSinceForTransactions("2023/01/01"),
 		)
 		if err == nil {
@@ -1787,7 +1822,8 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPersonalAccountTransactions(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetPersonalAccountTransactions(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1821,8 +1857,9 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetPersonalAccountTransactions(nil, "test-token", accountID)
+		_, err = client.GetPersonalAccountTransactions(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1914,7 +1951,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			CategoryID:       int64Ptr(123),
 		}
 
-		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		setTestToken(client, "test-access-token")
+		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1992,7 +2030,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			DescriptionGuest: &descriptionGuest,
 		}
 
-		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		setTestToken(client, "test-access-token")
+		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -2055,7 +2094,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			CategoryID: int64Ptr(789),
 		}
 
-		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		setTestToken(client, "test-access-token")
+		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -2128,7 +2168,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			DescriptionGuest: &descriptionGuest,
 		}
 
-		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "test-access-token", "account_key_123", 1337, request)
+		setTestToken(client, "test-access-token")
+		response, err := client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -2162,12 +2203,13 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			DescriptionGuest: stringPtr("test"),
 		}
 
-		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "", "account_key_123", 1337, request)
+		// Token is not set, so refreshToken should fail
+		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -2189,7 +2231,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			DescriptionGuest: stringPtr("test"),
 		}
 
-		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "test-token", "", 1337, request)
+		setTestToken(client, "test-token")
+		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -2212,7 +2255,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			},
 		}
 
-		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "test-token", "account_key_123", 1337, nil)
+		setTestToken(client, "test-token")
+		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -2240,7 +2284,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			DescriptionGuest: &longDescription,
 		}
 
-		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "test-token", "account_key_123", 1337, request)
+		setTestToken(client, "test-token")
+		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -2275,7 +2320,8 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			CategoryID: int64Ptr(99999),
 		}
 
-		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "test-token", "account_key_123", 1337, request)
+		setTestToken(client, "test-token")
+		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -2311,8 +2357,9 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 			DescriptionGuest: stringPtr("test"),
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.UpdatePersonalAccountTransaction(nil, "test-token", "account_key_123", 1337, request)
+		_, err = client.UpdatePersonalAccountTransaction(nil, "account_key_123", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

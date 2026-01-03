@@ -56,17 +56,14 @@ type AccountBalanceDetails struct {
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-account-balance-details-1
-func (c *Client) GetAccountBalanceDetails(ctx context.Context, accessToken string, accountID string) (*AccountBalanceDetails, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetAccountBalanceDetails(ctx context.Context, accountID string) (*AccountBalanceDetails, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
 
 	urlPath := fmt.Sprintf("link/accounts/%s/balances/details.json", url.PathEscape(accountID))
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -176,10 +173,7 @@ func WithEndDateForDueBalances(endDate string) GetAccountDueBalancesOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-account-due-balances-1
-func (c *Client) GetAccountDueBalances(ctx context.Context, accessToken string, accountID string, opts ...GetAccountDueBalancesOption) (*AccountDueBalances, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetAccountDueBalances(ctx context.Context, accountID string, opts ...GetAccountDueBalancesOption) (*AccountDueBalances, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -231,7 +225,7 @@ func (c *Client) GetAccountDueBalances(ctx context.Context, accessToken string, 
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

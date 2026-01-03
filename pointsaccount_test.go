@@ -95,7 +95,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -212,7 +213,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -281,7 +283,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccounts(context.Background(), "test-access-token",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccounts(context.Background(),
 			WithPageForPointAccounts(2),
 			WithPerPageForPointAccounts(100),
 		)
@@ -310,7 +313,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		_, err := client.GetPointAccounts(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err := client.GetPointAccounts(context.Background())
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -347,7 +351,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointAccounts(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetPointAccounts(context.Background())
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -385,7 +390,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		_, err = client.GetPointAccounts(context.Background())
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -419,7 +425,8 @@ func TestGetPointAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -495,7 +502,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccountTransactions(context.Background(), 123)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -553,7 +561,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccountTransactions(context.Background(), 123)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -622,7 +631,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123,
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccountTransactions(context.Background(), 123,
 			WithPageForPointAccountTransactions(2),
 			WithPerPageForPointAccountTransactions(100),
 		)
@@ -688,7 +698,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123,
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccountTransactions(context.Background(), 123,
 			WithSortKeyForPointAccountTransactions("date"),
 			WithSortByForPointAccountTransactions("desc"),
 		)
@@ -749,7 +760,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointAccountTransactions(context.Background(), "test-access-token", 123,
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointAccountTransactions(context.Background(), 123,
 			WithSinceForPointAccountTransactions("2023-01-01"),
 		)
 		if err != nil {
@@ -778,12 +790,13 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointAccountTransactions(context.Background(), "", 123)
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetPointAccountTransactions(context.Background(), 123)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -801,7 +814,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointAccountTransactions(context.Background(), "test-token", 123,
+		setTestToken(client, "test-token")
+		_, err = client.GetPointAccountTransactions(context.Background(), 123,
 			WithSortByForPointAccountTransactions("invalid"),
 		)
 		if err == nil {
@@ -826,7 +840,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointAccountTransactions(context.Background(), "test-token", 123,
+		setTestToken(client, "test-token")
+		_, err = client.GetPointAccountTransactions(context.Background(), 123,
 			WithSinceForPointAccountTransactions("2023/01/01"),
 		)
 		if err == nil {
@@ -863,7 +878,8 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointAccountTransactions(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetPointAccountTransactions(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -897,8 +913,9 @@ func TestGetPointAccountTransactions(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetPointAccountTransactions(nil, "test-token", accountID)
+		_, err = client.GetPointAccountTransactions(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -965,7 +982,8 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointExpirations(context.Background(), 123)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1031,7 +1049,8 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointExpirations(context.Background(), 123)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1097,7 +1116,8 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123,
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointExpirations(context.Background(), 123,
 			WithPageForPointExpirations(2),
 			WithPerPageForPointExpirations(100),
 		)
@@ -1155,7 +1175,8 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetPointExpirations(context.Background(), "test-access-token", 123,
+		setTestToken(client, "test-access-token")
+		response, err := client.GetPointExpirations(context.Background(), 123,
 			WithSinceForPointExpirations("2023-01-01"),
 		)
 		if err != nil {
@@ -1184,12 +1205,13 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointExpirations(context.Background(), "", 123)
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetPointExpirations(context.Background(), 123)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -1207,7 +1229,8 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointExpirations(context.Background(), "test-token", 123,
+		setTestToken(client, "test-token")
+		_, err = client.GetPointExpirations(context.Background(), 123,
 			WithSinceForPointExpirations("2023/01/01"),
 		)
 		if err == nil {
@@ -1244,7 +1267,8 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetPointExpirations(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetPointExpirations(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1278,8 +1302,9 @@ func TestGetPointExpirations(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetPointExpirations(nil, "test-token", accountID)
+		_, err = client.GetPointExpirations(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

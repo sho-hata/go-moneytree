@@ -66,10 +66,7 @@ type SubmitAccount2FARequest struct {
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/put-account-2fa
-func (c *Client) SubmitAccount2FA(ctx context.Context, accessToken string, accountID string, req *SubmitAccount2FARequest) error {
-	if accessToken == "" {
-		return fmt.Errorf("access token is required")
-	}
+func (c *Client) SubmitAccount2FA(ctx context.Context, accountID string, req *SubmitAccount2FARequest) error {
 	if accountID == "" {
 		return fmt.Errorf("account ID is required")
 	}
@@ -98,7 +95,7 @@ func (c *Client) SubmitAccount2FA(ctx context.Context, accessToken string, accou
 
 	urlPath := fmt.Sprintf("link/accounts/%s/2fa.json", url.PathEscape(accountID))
 
-	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -140,17 +137,14 @@ type CaptchaImage struct {
 //	fmt.Printf("CAPTCHA image URL: %s\n", captchaImage.URL)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-account-captcha
-func (c *Client) GetAccountCaptcha(ctx context.Context, accessToken string, accountID string) (*CaptchaImage, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetAccountCaptcha(ctx context.Context, accountID string) (*CaptchaImage, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
 
 	urlPath := fmt.Sprintf("link/accounts/%s/captcha.json", url.PathEscape(accountID))
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

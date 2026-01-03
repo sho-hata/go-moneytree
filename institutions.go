@@ -114,11 +114,7 @@ func WithSince(since string) GetInstitutionsOption {
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-institutions
-func (c *Client) GetInstitutions(ctx context.Context, accessToken string, opts ...GetInstitutionsOption) (*Institutions, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetInstitutions(ctx context.Context, opts ...GetInstitutionsOption) (*Institutions, error) {
 	options := &getInstitutionsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -135,7 +131,7 @@ func (c *Client) GetInstitutions(ctx context.Context, accessToken string, opts .
 		urlPath = fmt.Sprintf("%s?since=%s", urlPath, url.QueryEscape(*options.Since))
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

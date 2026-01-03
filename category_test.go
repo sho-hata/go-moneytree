@@ -91,7 +91,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategories(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategories(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -171,7 +172,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategories(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategories(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -236,7 +238,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategories(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategories(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -270,7 +273,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategories(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetCategories(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -301,7 +305,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategories(context.Background(), "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetCategories(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -333,8 +338,9 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetCategories(nil, "test-token") //nolint:staticcheck
+		_, err = client.GetCategories(nil) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -389,7 +395,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategories(context.Background(), "test-access-token", WithPageForCategories(2))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategories(context.Background(), WithPageForCategories(2))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -448,7 +455,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategories(context.Background(), "test-access-token", WithLocale("en"))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategories(context.Background(), WithLocale("en"))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -513,7 +521,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategories(context.Background(), "test-access-token",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategories(context.Background(),
 			WithPageForCategories(1),
 			WithLocale("ja"),
 		)
@@ -540,7 +549,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategories(context.Background(), "test-token", WithLocale("fr"))
+		setTestToken(client, "test-token")
+		_, err = client.GetCategories(context.Background(), WithLocale("fr"))
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -571,7 +581,8 @@ func TestGetCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategories(context.Background(), "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetCategories(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -647,7 +658,8 @@ func TestCreateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		response, err := client.CreateCategory(context.Background(), "test-access-token", request)
+		setTestToken(client, "test-access-token")
+		response, err := client.CreateCategory(context.Background(), request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -724,7 +736,8 @@ func TestCreateCategory(t *testing.T) {
 			ParentID: parentID,
 		}
 
-		response, err := client.CreateCategory(context.Background(), "test-access-token", request)
+		setTestToken(client, "test-access-token")
+		response, err := client.CreateCategory(context.Background(), request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -756,7 +769,8 @@ func TestCreateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		_, err = client.CreateCategory(context.Background(), "", request)
+		// Token is not set, so refreshToken should fail
+		_, err = client.CreateCategory(context.Background(), request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -779,7 +793,8 @@ func TestCreateCategory(t *testing.T) {
 			},
 		}
 
-		_, err = client.CreateCategory(context.Background(), "test-token", nil)
+		setTestToken(client, "test-token")
+		_, err = client.CreateCategory(context.Background(), nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -807,7 +822,8 @@ func TestCreateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		_, err = client.CreateCategory(context.Background(), "test-token", request)
+		setTestToken(client, "test-token")
+		_, err = client.CreateCategory(context.Background(), request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -843,7 +859,8 @@ func TestCreateCategory(t *testing.T) {
 			ParentID: 99999,
 		}
 
-		_, err = client.CreateCategory(context.Background(), "test-token", request)
+		setTestToken(client, "test-token")
+		_, err = client.CreateCategory(context.Background(), request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -881,7 +898,8 @@ func TestCreateCategory(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.CreateCategory(nil, "test-token", request) //nolint:staticcheck
+		setTestToken(client, "test-token")
+		_, err = client.CreateCategory(nil, request) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -945,7 +963,8 @@ func TestGetCategory(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategory(context.Background(), "test-access-token", categoryID)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategory(context.Background(), categoryID)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1013,7 +1032,8 @@ func TestGetCategory(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetCategory(context.Background(), "test-access-token", categoryID)
+		setTestToken(client, "test-access-token")
+		response, err := client.GetCategory(context.Background(), categoryID)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1043,7 +1063,8 @@ func TestGetCategory(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategory(context.Background(), "", 1048)
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetCategory(context.Background(), 1048)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1074,7 +1095,8 @@ func TestGetCategory(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategory(context.Background(), "test-token", 99999)
+		setTestToken(client, "test-token")
+		_, err = client.GetCategory(context.Background(), 99999)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1107,7 +1129,8 @@ func TestGetCategory(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetCategory(nil, "test-token", 1048) //nolint:staticcheck
+		setTestToken(client, "test-token")
+		_, err = client.GetCategory(nil, 1048) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1138,7 +1161,8 @@ func TestGetCategory(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetCategory(context.Background(), "test-token", 1048)
+		setTestToken(client, "test-token")
+		_, err = client.GetCategory(context.Background(), 1048)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1216,7 +1240,8 @@ func TestUpdateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		response, err := client.UpdateCategory(context.Background(), "test-access-token", categoryID, request)
+		setTestToken(client, "test-access-token")
+		response, err := client.UpdateCategory(context.Background(), categoryID, request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1288,7 +1313,8 @@ func TestUpdateCategory(t *testing.T) {
 			ParentID: parentID,
 		}
 
-		response, err := client.UpdateCategory(context.Background(), "test-access-token", categoryID, request)
+		setTestToken(client, "test-access-token")
+		response, err := client.UpdateCategory(context.Background(), categoryID, request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1320,7 +1346,8 @@ func TestUpdateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		_, err = client.UpdateCategory(context.Background(), "", 123, request)
+		// Token is not set, so refreshToken should fail
+		_, err = client.UpdateCategory(context.Background(), 123, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1343,7 +1370,8 @@ func TestUpdateCategory(t *testing.T) {
 			},
 		}
 
-		_, err = client.UpdateCategory(context.Background(), "test-token", 123, nil)
+		setTestToken(client, "test-token")
+		_, err = client.UpdateCategory(context.Background(), 123, nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1371,7 +1399,8 @@ func TestUpdateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		_, err = client.UpdateCategory(context.Background(), "test-token", 123, request)
+		setTestToken(client, "test-token")
+		_, err = client.UpdateCategory(context.Background(), 123, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1407,7 +1436,8 @@ func TestUpdateCategory(t *testing.T) {
 			ParentID: 0,
 		}
 
-		_, err = client.UpdateCategory(context.Background(), "test-token", 99999, request)
+		setTestToken(client, "test-token")
+		_, err = client.UpdateCategory(context.Background(), 99999, request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1445,7 +1475,8 @@ func TestUpdateCategory(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.UpdateCategory(nil, "test-token", 123, request) //nolint:staticcheck
+		setTestToken(client, "test-token")
+		_, err = client.UpdateCategory(nil, 123, request) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1492,7 +1523,8 @@ func TestDeleteCategory(t *testing.T) {
 			},
 		}
 
-		err = client.DeleteCategory(context.Background(), "test-access-token", categoryID)
+		setTestToken(client, "test-access-token")
+		err = client.DeleteCategory(context.Background(), categoryID)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1512,7 +1544,8 @@ func TestDeleteCategory(t *testing.T) {
 			},
 		}
 
-		err = client.DeleteCategory(context.Background(), "", 123)
+		// Token is not set, so refreshToken should fail
+		err = client.DeleteCategory(context.Background(), 123)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1543,7 +1576,8 @@ func TestDeleteCategory(t *testing.T) {
 			},
 		}
 
-		err = client.DeleteCategory(context.Background(), "test-token", 99999)
+		setTestToken(client, "test-token")
+		err = client.DeleteCategory(context.Background(), 99999)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1576,7 +1610,8 @@ func TestDeleteCategory(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		err = client.DeleteCategory(nil, "test-token", 123) //nolint:staticcheck
+		setTestToken(client, "test-token")
+		err = client.DeleteCategory(nil, 123) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1655,7 +1690,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetSystemCategories(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetSystemCategories(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1721,7 +1757,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetSystemCategories(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetSystemCategories(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1783,7 +1820,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetSystemCategories(context.Background(), "test-access-token", WithPageForCategories(2))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetSystemCategories(context.Background(), WithPageForCategories(2))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1845,7 +1883,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetSystemCategories(context.Background(), "test-access-token", WithLocale("en"))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetSystemCategories(context.Background(), WithLocale("en"))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1875,7 +1914,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetSystemCategories(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetSystemCategories(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1898,7 +1938,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetSystemCategories(context.Background(), "test-token", WithLocale("fr"))
+		setTestToken(client, "test-token")
+		_, err = client.GetSystemCategories(context.Background(), WithLocale("fr"))
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1929,7 +1970,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetSystemCategories(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetSystemCategories(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1968,7 +2010,8 @@ func TestGetSystemCategories(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetSystemCategories(context.Background(), "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetSystemCategories(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1990,7 +2033,8 @@ func TestGetSystemCategories(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetSystemCategories(nil, "test-token") //nolint:staticcheck
+		setTestToken(client, "test-token")
+		_, err = client.GetSystemCategories(nil) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

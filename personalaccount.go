@@ -109,11 +109,7 @@ func WithPerPage(perPage int) GetPersonalAccountsOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-accounts
-func (c *Client) GetPersonalAccounts(ctx context.Context, accessToken string, opts ...GetPersonalAccountsOption) (*PersonalAccounts, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetPersonalAccounts(ctx context.Context, opts ...GetPersonalAccountsOption) (*PersonalAccounts, error) {
 	options := &getPersonalAccountsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -126,7 +122,7 @@ func (c *Client) GetPersonalAccounts(ctx context.Context, accessToken string, op
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -224,10 +220,7 @@ func WithSinceForBalances(since string) GetPersonalAccountBalancesOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-account-balances
-func (c *Client) GetPersonalAccountBalances(ctx context.Context, accessToken string, accountID string, opts ...GetPersonalAccountBalancesOption) (*PersonalAccountBalances, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetPersonalAccountBalances(ctx context.Context, accountID string, opts ...GetPersonalAccountBalancesOption) (*PersonalAccountBalances, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -253,7 +246,7 @@ func (c *Client) GetPersonalAccountBalances(ctx context.Context, accessToken str
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -357,10 +350,7 @@ func WithPageForTermDeposits(page int) GetTermDepositsOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-account-term-deposits
-func (c *Client) GetTermDeposits(ctx context.Context, accessToken string, accountID string, opts ...GetTermDepositsOption) (*TermDeposits, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetTermDeposits(ctx context.Context, accountID string, opts ...GetTermDepositsOption) (*TermDeposits, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -379,7 +369,7 @@ func (c *Client) GetTermDeposits(ctx context.Context, accessToken string, accoun
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -541,10 +531,7 @@ func WithSinceForTransactions(since string) GetPersonalAccountTransactionsOption
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-accounts-transactions
-func (c *Client) GetPersonalAccountTransactions(ctx context.Context, accessToken string, accountID string, opts ...GetPersonalAccountTransactionsOption) (*PersonalAccountTransactions, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetPersonalAccountTransactions(ctx context.Context, accountID string, opts ...GetPersonalAccountTransactionsOption) (*PersonalAccountTransactions, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -582,7 +569,7 @@ func (c *Client) GetPersonalAccountTransactions(ctx context.Context, accessToken
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -652,10 +639,7 @@ type UpdatePersonalAccountTransactionRequest struct {
 //	transaction, err := client.UpdatePersonalAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/put-link-account-transaction
-func (c *Client) UpdatePersonalAccountTransaction(ctx context.Context, accessToken string, accountID string, transactionID int64, req *UpdatePersonalAccountTransactionRequest) (*PersonalAccountTransaction, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) UpdatePersonalAccountTransaction(ctx context.Context, accountID string, transactionID int64, req *UpdatePersonalAccountTransactionRequest) (*PersonalAccountTransaction, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -669,7 +653,7 @@ func (c *Client) UpdatePersonalAccountTransaction(ctx context.Context, accessTok
 
 	urlPath := fmt.Sprintf("link/accounts/%s/transactions/%d.json", url.PathEscape(accountID), transactionID)
 
-	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

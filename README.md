@@ -14,6 +14,8 @@ Moneytree LINK API uses OAuth 2.0 for authentication. You need to obtain an acce
 
 For detailed authentication flow, please refer to the [Moneytree LINK API documentation](https://docs.link.getmoneytree.com/docs/product-and-tech-overview).
 
+### Basic Usage
+
 ```go
 // Initialize client with account name (e.g., "jp-api-staging" or "jp-api")
 client, err := moneytree.NewClient("jp-api-staging")
@@ -40,13 +42,35 @@ if err != nil {
     log.Fatal(err)
 }
 
-// Get user profile using the access token
-profile, err := client.GetProfile(ctx, *token.AccessToken)
+// Set the token in the client
+// The client will automatically refresh the token when it expires
+client.SetToken(token)
+
+// Get user profile (no need to pass access token - it's managed automatically)
+profile, err := client.GetProfile(ctx)
 if err != nil {
     log.Fatal(err)
 }
 
 fmt.Printf("Moneytree ID: %s, Email: %s\n", profile.MoneytreeID, profile.Email)
+```
+
+### Token Management
+
+The client automatically manages OAuth tokens:
+
+- **Initial Token**: Use `RetrieveToken()` to get the initial token, then call `SetToken()` to set it in the client.
+- **Automatic Refresh**: When a token expires, the client automatically refreshes it using the `refresh_token` grant type.
+- **Thread-Safe**: Token refresh is thread-safe and prevents multiple concurrent refresh attempts.
+
+```go
+// After setting the initial token, all API calls will automatically use and refresh the token
+client.SetToken(token)
+
+// Subsequent API calls don't require passing tokens
+accounts, err := client.GetPersonalAccounts(ctx)
+balances, err := client.GetPersonalAccountBalances(ctx, "account-key-123")
+transactions, err := client.GetPersonalAccountTransactions(ctx, "account-key-123")
 ```
 
 ## API availability

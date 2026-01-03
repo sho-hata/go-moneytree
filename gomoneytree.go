@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -36,14 +37,15 @@ type Client struct {
 	httpClient  *http.Client
 	config      *Config
 	retryConfig RetryConfig
+	token       *OauthToken
+	tokenMutex  *sync.Mutex
+	getTokenErr error
 }
 
 // newHTTPClient creates a new HTTP client with appropriate timeouts and connection pool settings.
 // This function addresses the issues with the default HTTP client:
 // 1. Sets timeouts to prevent indefinite waiting
 // 2. Increases MaxIdleConnsPerHost to improve connection reuse
-//
-// Reference: https://belonginc.dev/members/mohiro/posts/http-default-client/
 func newHTTPClient() *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 
@@ -107,6 +109,7 @@ func NewClient(accountName string, opts ...NewClientOption) (*Client, error) {
 			BaseDelay:  3000 * time.Millisecond,
 			Enabled:    true,
 		},
+		tokenMutex: &sync.Mutex{},
 	}
 
 	for _, opt := range opts {
@@ -235,9 +238,31 @@ func cloneRequest(req *http.Request, bodyBytes []byte) (*http.Request, error) {
 	return cloned, nil
 }
 
+// setAuthorizationHeader sets the Authorization header on the request if a valid token is available.
+// This method is thread-safe and checks if the token exists and has a valid access token.
+func (c *Client) setAuthorizationHeader(req *http.Request) {
+	c.tokenMutex.Lock()
+	defer c.tokenMutex.Unlock()
+	if c.token != nil && c.token.AccessToken != nil && *c.token.AccessToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", *c.token.AccessToken))
+	}
+}
+
 func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Response, error) {
 	if ctx == nil {
 		return nil, errNonNilContext
+	}
+
+	// Check if this is an OAuth token endpoint that doesn't require authentication
+	requiresAuth := !c.isOAuthTokenEndpoint(req.URL)
+
+	// Refresh token if authentication is required
+	if requiresAuth {
+		if err := c.refreshToken(ctx); err != nil {
+			return nil, fmt.Errorf("refresh token: %w", err)
+		}
+		// Set Authorization header if token is available
+		c.setAuthorizationHeader(req)
 	}
 
 	// Read the request body once and store it for potential retries
@@ -266,6 +291,10 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Respon
 			currentReq, err = cloneRequest(req, bodyBytes)
 			if err != nil {
 				return lastResp, fmt.Errorf("failed to clone request for retry: %w", err)
+			}
+			// Re-set Authorization header for retries if authentication is required
+			if requiresAuth {
+				c.setAuthorizationHeader(currentReq)
 			}
 		}
 
@@ -360,6 +389,15 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Respon
 		_ = lastResp.Body.Close()
 	}
 	return lastResp, lastErr
+}
+
+// isOAuthTokenEndpoint checks if the URL is an OAuth token endpoint that doesn't require authentication.
+func (c *Client) isOAuthTokenEndpoint(u *url.URL) bool {
+	if u == nil {
+		return false
+	}
+	path := u.Path
+	return strings.HasSuffix(path, oauthTokenPath) || strings.HasSuffix(path, oauthRevokePath)
 }
 
 // WithBearerToken returns a RequestOption that sets the Authorization header

@@ -110,7 +110,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -221,7 +222,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -287,7 +289,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccounts(context.Background(), "test-access-token",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccounts(context.Background(),
 			WithPageForInvestmentAccounts(2),
 		)
 		if err != nil {
@@ -330,7 +333,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccounts(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccounts(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -357,7 +361,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccounts(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetInvestmentAccounts(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -388,7 +393,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccounts(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetInvestmentAccounts(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -421,7 +427,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetInvestmentAccounts(nil, "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetInvestmentAccounts(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -530,7 +537,8 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentPositions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -620,7 +628,8 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentPositions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -682,7 +691,8 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentPositions(context.Background(), "account_key_123",
 			WithPageForInvestmentPositions(2),
 		)
 		if err != nil {
@@ -725,7 +735,8 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentPositions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentPositions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -752,12 +763,13 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentPositions(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetInvestmentPositions(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -775,7 +787,8 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentPositions(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetInvestmentPositions(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -806,7 +819,8 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentPositions(context.Background(), "invalid-token", "account_key_123")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetInvestmentPositions(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -838,8 +852,9 @@ func TestGetInvestmentPositions(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetInvestmentPositions(nil, "test-token", "account_key_123")
+		_, err = client.GetInvestmentPositions(nil, "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -911,7 +926,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccountTransactions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccountTransactions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -969,7 +985,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccountTransactions(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccountTransactions(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -1032,7 +1049,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccountTransactions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccountTransactions(context.Background(), "account_key_123",
 			WithPageForInvestmentTransactions(2),
 			WithPerPageForInvestmentTransactions(100),
 		)
@@ -1098,7 +1116,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccountTransactions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccountTransactions(context.Background(), "account_key_123",
 			WithSortKeyForInvestmentTransactions("date"),
 			WithSortByForInvestmentTransactions("desc"),
 		)
@@ -1159,7 +1178,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInvestmentAccountTransactions(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInvestmentAccountTransactions(context.Background(), "account_key_123",
 			WithSinceForInvestmentTransactions("2023-01-01"),
 		)
 		if err != nil {
@@ -1188,12 +1208,13 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccountTransactions(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetInvestmentAccountTransactions(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -1211,7 +1232,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccountTransactions(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetInvestmentAccountTransactions(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1234,7 +1256,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccountTransactions(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetInvestmentAccountTransactions(context.Background(), "account_key_123",
 			WithSortByForInvestmentTransactions("invalid"),
 		)
 		if err == nil {
@@ -1259,7 +1282,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccountTransactions(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetInvestmentAccountTransactions(context.Background(), "account_key_123",
 			WithSinceForInvestmentTransactions("2023/01/01"),
 		)
 		if err == nil {
@@ -1294,7 +1318,8 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInvestmentAccountTransactions(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetInvestmentAccountTransactions(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -1328,8 +1353,9 @@ func TestGetInvestmentAccountTransactions(t *testing.T) {
 			},
 		}
 
+		setTestToken(client, "test-token")
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetInvestmentAccountTransactions(nil, "test-token", accountID)
+		_, err = client.GetInvestmentAccountTransactions(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

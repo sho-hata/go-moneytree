@@ -107,7 +107,8 @@ func TestGetInstitutions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInstitutions(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInstitutions(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -201,7 +202,8 @@ func TestGetInstitutions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInstitutions(context.Background(), "test-access-token", WithSince(sinceTime))
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInstitutions(context.Background(), WithSince(sinceTime))
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -242,7 +244,8 @@ func TestGetInstitutions(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetInstitutions(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetInstitutions(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -269,7 +272,8 @@ func TestGetInstitutions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInstitutions(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetInstitutions(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -300,7 +304,8 @@ func TestGetInstitutions(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetInstitutions(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetInstitutions(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -333,7 +338,8 @@ func TestGetInstitutions(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetInstitutions(nil, "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetInstitutions(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -374,7 +380,8 @@ func TestWithSince_InvalidDateFormat(t *testing.T) {
 					},
 				}
 
-				_, err = client.GetInstitutions(context.Background(), "test-token",
+				setTestToken(client, "test-token")
+				_, err = client.GetInstitutions(context.Background(),
 					WithSince(invalidDate),
 				)
 				if err == nil {
@@ -421,7 +428,8 @@ func TestWithSince_InvalidDateFormat(t *testing.T) {
 
 				// オプション関数を適用してもエラーが発生しないことを確認
 				// （実際のAPI呼び出しは失敗するが、日付フォーマットエラーではない）
-				_, err = client.GetInstitutions(context.Background(), "test-token",
+				setTestToken(client, "test-token")
+				_, err = client.GetInstitutions(context.Background(),
 					opt,
 				)
 				// 日付フォーマットエラーではないことを確認

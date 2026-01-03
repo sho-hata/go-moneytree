@@ -24,12 +24,8 @@ type Profile struct {
 
 // GetProfile retrieves the user profile information.
 // This endpoint requires the guest_read OAuth scope.
-func (c *Client) GetProfile(ctx context.Context, accessToken string) (*Profile, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, "link/profile.json", nil, WithBearerToken(accessToken))
+func (c *Client) GetProfile(ctx context.Context) (*Profile, error) {
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, "link/profile.json", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -43,12 +39,8 @@ func (c *Client) GetProfile(ctx context.Context, accessToken string) (*Profile, 
 
 // RevokeProfile revokes the guest account connection.
 // This endpoint requires the guest_read OAuth scope.
-func (c *Client) RevokeProfile(ctx context.Context, accessToken string) error {
-	if accessToken == "" {
-		return fmt.Errorf("access token is required")
-	}
-
-	httpReq, err := c.NewRequest(ctx, http.MethodPost, "link/profile/revoke.json", nil, WithBearerToken(accessToken))
+func (c *Client) RevokeProfile(ctx context.Context) error {
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, "link/profile/revoke.json", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -107,7 +99,7 @@ type AccountGroups struct {
 // Example:
 //
 //	client := moneytree.NewClient("jp-api-staging")
-//	response, err := client.GetAccountGroups(ctx, accessToken)
+//	response, err := client.GetAccountGroups(ctx)
 //	if err != nil {
 //		log.Fatal(err)
 //	}
@@ -116,12 +108,8 @@ type AccountGroups struct {
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-profile-account-groups
-func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*AccountGroups, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, "link/profile/account_groups.json", nil, WithBearerToken(accessToken))
+func (c *Client) GetAccountGroups(ctx context.Context) (*AccountGroups, error) {
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, "link/profile/account_groups.json", nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -148,18 +136,14 @@ func (c *Client) GetAccountGroups(ctx context.Context, accessToken string) (*Acc
 // Example:
 //
 //	client := moneytree.NewClient("jp-api-staging")
-//	err := client.RefreshProfile(ctx, accessToken)
+//	err := client.RefreshProfile(ctx)
 //	if err != nil {
 //		log.Fatal(err)
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/post-link-profile-refresh
-func (c *Client) RefreshProfile(ctx context.Context, accessToken string) error {
-	if accessToken == "" {
-		return fmt.Errorf("access token is required")
-	}
-
-	httpReq, err := c.NewRequest(ctx, http.MethodPost, "link/profile/refresh.json", nil, WithBearerToken(accessToken))
+func (c *Client) RefreshProfile(ctx context.Context) error {
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, "link/profile/refresh.json", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -187,19 +171,15 @@ func (c *Client) RefreshProfile(ctx context.Context, accessToken string) error {
 // Example:
 //
 //	client := moneytree.NewClient("jp-api-staging")
-//	err := client.RefreshAccountGroup(ctx, accessToken, 12345)
+//	err := client.RefreshAccountGroup(ctx, 12345)
 //	if err != nil {
 //		log.Fatal(err)
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/post-link-account-group-refresh
-func (c *Client) RefreshAccountGroup(ctx context.Context, accessToken string, accountGroup int64) error {
-	if accessToken == "" {
-		return fmt.Errorf("access token is required")
-	}
-
+func (c *Client) RefreshAccountGroup(ctx context.Context, accountGroup int64) error {
 	urlPath := fmt.Sprintf("link/account_groups/%d/refresh.json", accountGroup)
-	httpReq, err := c.NewRequest(ctx, http.MethodPost, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, urlPath, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

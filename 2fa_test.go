@@ -67,7 +67,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-access-token", "account_key_123", request)
+		setTestToken(client, "test-access-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -126,7 +127,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-access-token", "account_key_123", request)
+		setTestToken(client, "test-access-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -153,7 +155,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "", "account_key_123", request)
+		// Token is not set, so refreshToken should fail
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -183,7 +186,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "", request)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -206,7 +210,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "account_key_123", nil)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -238,7 +243,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "account_key_123", request)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -265,7 +271,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			KeyValues: SubmitAccount2FAKeyValues{},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "account_key_123", request)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -295,7 +302,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "account_key_123", request)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -325,7 +333,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "account_key_123", request)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -363,7 +372,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 			},
 		}
 
-		err = client.SubmitAccount2FA(context.Background(), "test-token", "account_key_123", request)
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(context.Background(), "account_key_123", request)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -403,7 +413,8 @@ func TestSubmitAccount2FA(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		err = client.SubmitAccount2FA(nil, "test-token", "account_key_123", request) //nolint:staticcheck
+		setTestToken(client, "test-token")
+		err = client.SubmitAccount2FA(nil, "account_key_123", request) //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -455,7 +466,8 @@ func TestGetAccountCaptcha(t *testing.T) {
 			},
 		}
 
-		captchaImage, err := client.GetAccountCaptcha(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		captchaImage, err := client.GetAccountCaptcha(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -482,7 +494,8 @@ func TestGetAccountCaptcha(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountCaptcha(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetAccountCaptcha(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -505,7 +518,8 @@ func TestGetAccountCaptcha(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountCaptcha(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountCaptcha(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -536,7 +550,8 @@ func TestGetAccountCaptcha(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountCaptcha(context.Background(), "test-token", "account_key_123")
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountCaptcha(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -569,7 +584,8 @@ func TestGetAccountCaptcha(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetAccountCaptcha(nil, "test-token", "account_key_123") //nolint:staticcheck
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountCaptcha(nil, "account_key_123") //nolint:staticcheck
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

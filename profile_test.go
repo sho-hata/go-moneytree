@@ -55,8 +55,9 @@ func TestGetProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
+		setTestToken(client, "test-access-token")
 
-		profile, err := client.GetProfile(context.Background(), "test-access-token")
+		profile, err := client.GetProfile(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -88,13 +89,13 @@ func TestGetProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
-
-		_, err = client.GetProfile(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -119,8 +120,9 @@ func TestGetProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
+		setTestToken(client, "invalid-token")
 
-		_, err = client.GetProfile(context.Background(), "invalid-token")
+		_, err = client.GetProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -151,9 +153,10 @@ func TestGetProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
+		setTestToken(client, "test-token")
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetProfile(nil, "test-token")
+		_, err = client.GetProfile(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -196,8 +199,9 @@ func TestRevokeProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
+		setTestToken(client, "test-access-token")
 
-		err = client.RevokeProfile(context.Background(), "test-access-token")
+		err = client.RevokeProfile(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -216,13 +220,13 @@ func TestRevokeProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
-
-		err = client.RevokeProfile(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		err = client.RevokeProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -247,8 +251,9 @@ func TestRevokeProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
+		setTestToken(client, "invalid-token")
 
-		err = client.RevokeProfile(context.Background(), "invalid-token")
+		err = client.RevokeProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -279,9 +284,10 @@ func TestRevokeProfile(t *testing.T) {
 				BaseURL: baseURL,
 			},
 		}
+		setTestToken(client, "test-token")
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		err = client.RevokeProfile(nil, "test-token")
+		err = client.RevokeProfile(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -348,7 +354,8 @@ func TestGetAccountGroups(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountGroups(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountGroups(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -423,7 +430,8 @@ func TestGetAccountGroups(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountGroups(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountGroups(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -455,12 +463,13 @@ func TestGetAccountGroups(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountGroups(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetAccountGroups(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -486,7 +495,8 @@ func TestGetAccountGroups(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountGroups(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		_, err = client.GetAccountGroups(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -519,7 +529,8 @@ func TestGetAccountGroups(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetAccountGroups(nil, "test-token")
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountGroups(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -563,7 +574,8 @@ func TestRefreshProfile(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshProfile(context.Background(), "test-access-token")
+		setTestToken(client, "test-access-token")
+		err = client.RefreshProfile(context.Background())
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -583,12 +595,13 @@ func TestRefreshProfile(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshProfile(context.Background(), "")
+		// Token is not set, so refreshToken should fail
+		err = client.RefreshProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -614,7 +627,8 @@ func TestRefreshProfile(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshProfile(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		err = client.RefreshProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -653,7 +667,8 @@ func TestRefreshProfile(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshProfile(context.Background(), "invalid-token")
+		setTestToken(client, "invalid-token")
+		err = client.RefreshProfile(context.Background())
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -686,7 +701,8 @@ func TestRefreshProfile(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		err = client.RefreshProfile(nil, "test-token")
+		setTestToken(client, "test-token")
+		err = client.RefreshProfile(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -733,7 +749,8 @@ func TestRefreshAccountGroup(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshAccountGroup(context.Background(), "test-access-token", accountGroupID)
+		setTestToken(client, "test-access-token")
+		err = client.RefreshAccountGroup(context.Background(), accountGroupID)
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -753,12 +770,13 @@ func TestRefreshAccountGroup(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshAccountGroup(context.Background(), "", 12345)
+		// Token is not set, so refreshToken should fail
+		err = client.RefreshAccountGroup(context.Background(), 12345)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
+		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
+			t.Errorf("expected error about token refresh, got %v", err)
 		}
 	})
 
@@ -784,7 +802,8 @@ func TestRefreshAccountGroup(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshAccountGroup(context.Background(), "invalid-token", 12345)
+		setTestToken(client, "invalid-token")
+		err = client.RefreshAccountGroup(context.Background(), 12345)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -823,7 +842,8 @@ func TestRefreshAccountGroup(t *testing.T) {
 			},
 		}
 
-		err = client.RefreshAccountGroup(context.Background(), "invalid-token", 12345)
+		setTestToken(client, "invalid-token")
+		err = client.RefreshAccountGroup(context.Background(), 12345)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -856,7 +876,8 @@ func TestRefreshAccountGroup(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		err = client.RefreshAccountGroup(nil, "test-token", 12345)
+		setTestToken(client, "test-token")
+		err = client.RefreshAccountGroup(nil, 12345)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

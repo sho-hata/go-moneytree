@@ -137,11 +137,7 @@ func WithPageForInvestmentAccounts(page int) GetInvestmentAccountsOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-investments-accounts
-func (c *Client) GetInvestmentAccounts(ctx context.Context, accessToken string, opts ...GetInvestmentAccountsOption) (*InvestmentAccounts, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetInvestmentAccounts(ctx context.Context, opts ...GetInvestmentAccountsOption) (*InvestmentAccounts, error) {
 	options := &getInvestmentAccountsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -156,7 +152,7 @@ func (c *Client) GetInvestmentAccounts(ctx context.Context, accessToken string, 
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -275,10 +271,7 @@ func WithPageForInvestmentPositions(page int) GetInvestmentPositionsOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-investments-accounts-positions
-func (c *Client) GetInvestmentPositions(ctx context.Context, accessToken string, accountID string, opts ...GetInvestmentPositionsOption) (*InvestmentPositions, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetInvestmentPositions(ctx context.Context, accountID string, opts ...GetInvestmentPositionsOption) (*InvestmentPositions, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -297,7 +290,7 @@ func (c *Client) GetInvestmentPositions(ctx context.Context, accessToken string,
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -404,10 +397,7 @@ func WithSinceForInvestmentTransactions(since string) GetInvestmentAccountTransa
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-investments-accounts-transactions
-func (c *Client) GetInvestmentAccountTransactions(ctx context.Context, accessToken string, accountID string, opts ...GetInvestmentAccountTransactionsOption) (*InvestmentAccountTransactions, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetInvestmentAccountTransactions(ctx context.Context, accountID string, opts ...GetInvestmentAccountTransactionsOption) (*InvestmentAccountTransactions, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -445,7 +435,7 @@ func (c *Client) GetInvestmentAccountTransactions(ctx context.Context, accessTok
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

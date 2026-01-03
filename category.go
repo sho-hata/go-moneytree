@@ -108,11 +108,7 @@ func WithLocale(locale string) GetCategoriesOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-categories
-func (c *Client) GetCategories(ctx context.Context, accessToken string, opts ...GetCategoriesOption) (*Categories, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetCategories(ctx context.Context, opts ...GetCategoriesOption) (*Categories, error) {
 	options := &getCategoriesOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -133,7 +129,7 @@ func (c *Client) GetCategories(ctx context.Context, accessToken string, opts ...
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -173,10 +169,7 @@ type CreateCategoryRequest struct {
 //	fmt.Printf("Created category: ID=%d, Name=%s\n", category.ID, category.Name)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/post-link-categories
-func (c *Client) CreateCategory(ctx context.Context, accessToken string, req *CreateCategoryRequest) (*Category, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) CreateCategory(ctx context.Context, req *CreateCategoryRequest) (*Category, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request cannot be nil")
 	}
@@ -186,7 +179,7 @@ func (c *Client) CreateCategory(ctx context.Context, accessToken string, req *Cr
 
 	urlPath := "link/categories.json"
 
-	httpReq, err := c.NewRequest(ctx, http.MethodPost, urlPath, req, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, urlPath, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -212,14 +205,10 @@ func (c *Client) CreateCategory(ctx context.Context, accessToken string, req *Cr
 //	fmt.Printf("Category: ID=%d, Name=%s, IsSystem=%v\n", category.ID, category.Name, category.IsSystem)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-category
-func (c *Client) GetCategory(ctx context.Context, accessToken string, categoryID int64) (*Category, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetCategory(ctx context.Context, categoryID int64) (*Category, error) {
 	urlPath := fmt.Sprintf("link/categories/%d.json", categoryID)
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -258,10 +247,7 @@ type UpdateCategoryRequest struct {
 //	fmt.Printf("Updated category: ID=%d, Name=%s\n", category.ID, category.Name)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/put-link-category
-func (c *Client) UpdateCategory(ctx context.Context, accessToken string, categoryID int64, req *UpdateCategoryRequest) (*Category, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) UpdateCategory(ctx context.Context, categoryID int64, req *UpdateCategoryRequest) (*Category, error) {
 	if req == nil {
 		return nil, fmt.Errorf("request cannot be nil")
 	}
@@ -271,7 +257,7 @@ func (c *Client) UpdateCategory(ctx context.Context, accessToken string, categor
 
 	urlPath := fmt.Sprintf("link/categories/%d.json", categoryID)
 
-	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -297,14 +283,10 @@ func (c *Client) UpdateCategory(ctx context.Context, accessToken string, categor
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/delete-link-category
-func (c *Client) DeleteCategory(ctx context.Context, accessToken string, categoryID int64) error {
-	if accessToken == "" {
-		return fmt.Errorf("access token is required")
-	}
-
+func (c *Client) DeleteCategory(ctx context.Context, categoryID int64) error {
 	urlPath := fmt.Sprintf("link/categories/%d.json", categoryID)
 
-	httpReq, err := c.NewRequest(ctx, http.MethodDelete, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodDelete, urlPath, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
@@ -338,11 +320,7 @@ func (c *Client) DeleteCategory(ctx context.Context, accessToken string, categor
 //	}
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-categories-system
-func (c *Client) GetSystemCategories(ctx context.Context, accessToken string, opts ...GetCategoriesOption) (*Categories, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetSystemCategories(ctx context.Context, opts ...GetCategoriesOption) (*Categories, error) {
 	options := &getCategoriesOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -363,7 +341,7 @@ func (c *Client) GetSystemCategories(ctx context.Context, accessToken string, op
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

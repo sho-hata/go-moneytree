@@ -9,7 +9,22 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
+
+// setTestToken is a helper function to set a test token on a client.
+func setTestToken(client *Client, accessToken string) {
+	if accessToken == "" {
+		return
+	}
+	now := int(time.Now().Unix())
+	expiresIn := 3600
+	client.SetToken(&OauthToken{
+		AccessToken: &accessToken,
+		CreatedAt:   &now,
+		ExpiresIn:   &expiresIn,
+	})
+}
 
 func TestGetAccountBalanceDetails(t *testing.T) {
 	t.Parallel()
@@ -72,7 +87,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountBalanceDetails(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountBalanceDetails(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -141,7 +157,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountBalanceDetails(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountBalanceDetails(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -168,7 +185,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountBalanceDetails(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetAccountBalanceDetails(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -191,7 +209,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountBalanceDetails(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountBalanceDetails(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -224,7 +243,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountBalanceDetails(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetAccountBalanceDetails(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -259,7 +279,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetAccountBalanceDetails(nil, "test-token", accountID)
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountBalanceDetails(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -318,7 +339,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountDueBalances(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -377,7 +399,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123")
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountDueBalances(context.Background(), "account_key_123")
 		if err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -431,7 +454,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountDueBalances(context.Background(), "account_key_123",
 			WithSinceForDueBalances("2023-01-01"),
 		)
 		if err != nil {
@@ -487,7 +511,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		response, err := client.GetAccountDueBalances(context.Background(), "test-access-token", "account_key_123",
+		setTestToken(client, "test-access-token")
+		response, err := client.GetAccountDueBalances(context.Background(), "account_key_123",
 			WithPageForDueBalances(2),
 		)
 		if err != nil {
@@ -513,7 +538,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountDueBalances(context.Background(), "", "account_key_123")
+		// Token is not set, so refreshToken should fail
+		_, err = client.GetAccountDueBalances(context.Background(), "account_key_123")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -536,7 +562,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "")
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountDueBalances(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -559,7 +586,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountDueBalances(context.Background(), "account_key_123",
 			WithStartDateForDueBalances("2023-01-01"),
 		)
 		if err == nil {
@@ -584,7 +612,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountDueBalances(context.Background(), "account_key_123",
 			WithEndDateForDueBalances("2023-12-31"),
 		)
 		if err == nil {
@@ -609,7 +638,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountDueBalances(context.Background(), "test-token", "account_key_123",
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountDueBalances(context.Background(), "account_key_123",
 			WithSinceForDueBalances("2023/01/01"),
 		)
 		if err == nil {
@@ -644,7 +674,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		_, err = client.GetAccountDueBalances(context.Background(), "invalid-token", accountID)
+		setTestToken(client, "invalid-token")
+		_, err = client.GetAccountDueBalances(context.Background(), accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
@@ -679,7 +710,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 		}
 
 		// nolint:staticcheck // passing nil context for testing purposes
-		_, err = client.GetAccountDueBalances(nil, "test-token", accountID)
+		setTestToken(client, "test-token")
+		_, err = client.GetAccountDueBalances(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}

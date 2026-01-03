@@ -121,11 +121,7 @@ func WithPerPageForPointAccounts(perPage int) GetPointAccountsOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-points-accounts
-func (c *Client) GetPointAccounts(ctx context.Context, accessToken string, opts ...GetPointAccountsOption) (*PointAccounts, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetPointAccounts(ctx context.Context, opts ...GetPointAccountsOption) (*PointAccounts, error) {
 	options := &getPointAccountsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -138,7 +134,7 @@ func (c *Client) GetPointAccounts(ctx context.Context, accessToken string, opts 
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -245,11 +241,7 @@ func WithSinceForPointAccountTransactions(since string) GetPointAccountTransacti
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-points-accounts-transactions
-func (c *Client) GetPointAccountTransactions(ctx context.Context, accessToken string, accountID int64, opts ...GetPointAccountTransactionsOption) (*PointAccountTransactions, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetPointAccountTransactions(ctx context.Context, accountID int64, opts ...GetPointAccountTransactionsOption) (*PointAccountTransactions, error) {
 	options := &getTransactionsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -283,7 +275,7 @@ func (c *Client) GetPointAccountTransactions(ctx context.Context, accessToken st
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -362,7 +354,7 @@ func WithSinceForPointExpirations(since string) GetPointExpirationsOption {
 // Example:
 //
 //	client := moneytree.NewClient("jp-api-staging")
-//	response, err := client.GetPointExpirations(ctx, accessToken, 1048)
+//	response, err := client.GetPointExpirations(ctx, 1048)
 //	if err != nil {
 //		log.Fatal(err)
 //	}
@@ -372,23 +364,19 @@ func WithSinceForPointExpirations(since string) GetPointExpirationsOption {
 //
 // Example with pagination:
 //
-//	response, err := client.GetPointExpirations(ctx, accessToken, 1048,
+//	response, err := client.GetPointExpirations(ctx, 1048,
 //		moneytree.WithPageForPointExpirations(1),
 //		moneytree.WithPerPageForPointExpirations(100),
 //	)
 //
 // Example with since parameter:
 //
-//	response, err := client.GetPointExpirations(ctx, accessToken, 1048,
+//	response, err := client.GetPointExpirations(ctx, 1048,
 //		moneytree.WithSinceForPointExpirations("2023-01-01"),
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-points-accounts-expirations
-func (c *Client) GetPointExpirations(ctx context.Context, accessToken string, accountID int64, opts ...GetPointExpirationsOption) (*PointExpirations, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetPointExpirations(ctx context.Context, accountID int64, opts ...GetPointExpirationsOption) (*PointExpirations, error) {
 	options := &getPointExpirationsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -410,7 +398,7 @@ func (c *Client) GetPointExpirations(ctx context.Context, accessToken string, ac
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

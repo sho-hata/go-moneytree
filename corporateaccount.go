@@ -163,11 +163,7 @@ func WithPageForCorporateAccounts(page int) GetCorporateAccountsOption {
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-corporate-accounts
-func (c *Client) GetCorporateAccounts(ctx context.Context, accessToken string, opts ...GetCorporateAccountsOption) (*CorporateAccounts, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
-
+func (c *Client) GetCorporateAccounts(ctx context.Context, opts ...GetCorporateAccountsOption) (*CorporateAccounts, error) {
 	options := &getCorporateAccountsOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -182,7 +178,7 @@ func (c *Client) GetCorporateAccounts(ctx context.Context, accessToken string, o
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -309,10 +305,7 @@ func WithSinceForCorporateBalances(since string) GetCorporateAccountBalancesOpti
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-corporate-account-balances
-func (c *Client) GetCorporateAccountBalances(ctx context.Context, accessToken string, accountID string, opts ...GetCorporateAccountBalancesOption) (*CorporateAccountBalances, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetCorporateAccountBalances(ctx context.Context, accountID string, opts ...GetCorporateAccountBalancesOption) (*CorporateAccountBalances, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -350,7 +343,7 @@ func (c *Client) GetCorporateAccountBalances(ctx context.Context, accessToken st
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -534,10 +527,7 @@ func WithSinceForCorporateTransactions(since string) GetCorporateAccountTransact
 //	)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/get-link-corporate-accounts-transactions
-func (c *Client) GetCorporateAccountTransactions(ctx context.Context, accessToken string, accountID string, opts ...GetCorporateAccountTransactionsOption) (*CorporateAccountTransactions, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) GetCorporateAccountTransactions(ctx context.Context, accountID string, opts ...GetCorporateAccountTransactionsOption) (*CorporateAccountTransactions, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -575,7 +565,7 @@ func (c *Client) GetCorporateAccountTransactions(ctx context.Context, accessToke
 		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
 	}
 
-	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -635,10 +625,7 @@ type UpdateCorporateAccountTransactionRequest struct {
 //	transaction, err := client.UpdateCorporateAccountTransaction(ctx, accessToken, "account_key_123", 1337, request)
 //
 // Reference: https://docs.link.getmoneytree.com/reference/put-link-corporate-account-transaction
-func (c *Client) UpdateCorporateAccountTransaction(ctx context.Context, accessToken string, accountID string, transactionID int64, req *UpdateCorporateAccountTransactionRequest) (*CorporateAccountTransaction, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("access token is required")
-	}
+func (c *Client) UpdateCorporateAccountTransaction(ctx context.Context, accountID string, transactionID int64, req *UpdateCorporateAccountTransactionRequest) (*CorporateAccountTransaction, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("account ID is required")
 	}
@@ -652,7 +639,7 @@ func (c *Client) UpdateCorporateAccountTransaction(ctx context.Context, accessTo
 
 	urlPath := fmt.Sprintf("link/corporate/accounts/%s/transactions/%d.json", url.PathEscape(accountID), transactionID)
 
-	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
