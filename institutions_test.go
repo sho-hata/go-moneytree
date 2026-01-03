@@ -376,6 +376,7 @@ func TestWithSince_InvalidDateFormat(t *testing.T) {
 					WithSince(invalidDate),
 				)
 				if err == nil {
+					t.Errorf("expected error for invalid date: %s, got nil", invalidDate)
 				}
 			})
 		}
@@ -420,6 +421,9 @@ func TestWithSince_InvalidDateFormat(t *testing.T) {
 					opt,
 				)
 				// 日付フォーマットエラーではないことを確認
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
 			})
 		}
 	})

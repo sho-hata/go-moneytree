@@ -550,10 +550,11 @@ func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
 				}
 
 				setTestToken(client, "test-token")
-		_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123",
+				_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123",
 					WithSinceForBalances(invalidDate),
 				)
 				if err == nil {
+					t.Errorf("expected error for invalid date: %s, got nil", invalidDate)
 				}
 			})
 		}
@@ -594,10 +595,13 @@ func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
 				// オプション関数を適用してもエラーが発生しないことを確認
 				// （実際のAPI呼び出しは失敗するが、日付フォーマットエラーではない）
 				setTestToken(client, "test-token")
-		_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123",
+				_, err = client.GetPersonalAccountBalances(context.Background(), "account_key_123",
 					opt,
 				)
 				// 日付フォーマットエラーではないことを確認
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
 			})
 		}
 	})

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -78,9 +77,6 @@ func TestCheckResponseError(t *testing.T) {
 	t.Run("エラーケース: ステータスコード400の場合、APIErrorを返す", func(t *testing.T) {
 		t.Parallel()
 
-		expectedError := "invalid_grant"
-		expectedErrorDescription := "The provided authorization grant is invalid, expired, revoked, does not match the redirection URI used in the authorization request, or was issued to another client."
-
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
@@ -111,14 +107,6 @@ func TestCheckResponseError(t *testing.T) {
 		}
 		if apiErr.StatusCode != http.StatusBadRequest {
 			t.Errorf("expected status code %d, got %d", http.StatusBadRequest, apiErr.StatusCode)
-		}
-		if apiErr.ErrorType != expectedError {
-		}
-		if apiErr.ErrorDescription != expectedErrorDescription {
-		}
-		if !strings.Contains(apiErr.Error(), expectedError) {
-		}
-		if !strings.Contains(apiErr.Error(), expectedErrorDescription) {
 		}
 	})
 
