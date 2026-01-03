@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Moneytree LINK API Documentation
+    url: https://docs.link.getmoneytree.com/docs/product-and-tech-overview
+    about: Please check the official Moneytree LINK API documentation for API-related questions
+
