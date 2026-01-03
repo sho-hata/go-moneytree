@@ -53,6 +53,7 @@ fmt.Printf("Moneytree ID: %s, Email: %s\n", profile.MoneytreeID, profile.Email)
 
 | Category           | API                   | Availability    |
 | ------------------ | --------------------- | --------------- |
+| OAuth              | Start Authorization   | Not Implemented |
 | OAuth              | Retrieve Token        | Available       |
 | OAuth              | Revoke Token          | Available       |
 | Profile            | Get Profile           | Available       |
@@ -72,8 +73,14 @@ fmt.Printf("Moneytree ID: %s, Email: %s\n", profile.MoneytreeID, profile.Email)
 | Point Accounts     | Get Accounts          | Available       |
 | Point Accounts     | Get Transactions      | Available       |
 | Point Accounts     | Get Expirations       | Available       |
+| Manual Accounts    | All                   | Not Implemented |
 | Institutions       | Get Institutions      | Available       |
-| Category           | All                   | Not Implemented |
+| Category           | Get Categories        | Available       |
+| Category           | Create Category       | Available       |
+| Category           | Get Category          | Available       |
+| Category           | Update Category       | Available       |
+| Category           | Delete Category       | Available       |
+| Category           | Get System Categories | Available       |
 | 2FA                | Submit 2FA            | Available       |
 | 2FA                | Get Captcha           | Available       |
 
