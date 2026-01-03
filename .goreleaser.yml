@@ -24,6 +24,7 @@ changelog:
       - '^chore:'
       - Merge pull request
       - Merge branch
+      - fixup
 
 # Snapshot configuration
 snapshot:

@@ -265,6 +265,11 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v any) (*http.Respon
 		return nil, errNonNilContext
 	}
 
+	// Initialize tokenMutex if it's nil (for test clients created directly)
+	if c.tokenMutex == nil {
+		c.tokenMutex = &sync.Mutex{}
+	}
+
 	// Check if this is an OAuth token endpoint that doesn't require authentication
 	requiresAuth := !c.isOAuthTokenEndpoint(req.URL)
 

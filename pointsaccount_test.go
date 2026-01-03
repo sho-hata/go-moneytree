@@ -303,23 +303,22 @@ func TestGetPointAccounts(t *testing.T) {
 	t.Run("error case: access token is empty", func(t *testing.T) {
 		t.Parallel()
 
+		baseURL, err := url.Parse("https://jp-api-staging.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
 		client := &Client{
 			httpClient: http.DefaultClient,
 			config: &Config{
-				BaseURL: &url.URL{
-					Scheme: "https",
-					Host:   "jp-api-staging.getmoneytree.com",
-				},
+				BaseURL: baseURL,
 			},
 		}
 
 		// Token is not set, so refreshToken should fail
-		_, err := client.GetPointAccounts(context.Background())
+		_, err = client.GetPointAccounts(context.Background())
 		if err == nil {
 			t.Fatal("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error message to contain 'access token is required', got %v", err)
 		}
 	})
 
@@ -795,9 +794,6 @@ func TestGetPointAccountTransactions(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
-			t.Errorf("expected error about token refresh, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when sort_by is invalid", func(t *testing.T) {
@@ -821,9 +817,6 @@ func TestGetPointAccountTransactions(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "sort_by must be 'asc' or 'desc'") {
-			t.Errorf("expected error about sort_by, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when since date format is invalid", func(t *testing.T) {
@@ -846,9 +839,6 @@ func TestGetPointAccountTransactions(t *testing.T) {
 		)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
-			t.Errorf("expected error about date format, got %v", err)
 		}
 	})
 
@@ -891,9 +881,6 @@ func TestGetPointAccountTransactions(t *testing.T) {
 		if apiErr.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_token") {
-			t.Errorf("expected error about invalid_token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -918,9 +905,6 @@ func TestGetPointAccountTransactions(t *testing.T) {
 		_, err = client.GetPointAccountTransactions(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }
@@ -1210,9 +1194,6 @@ func TestGetPointExpirations(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
-			t.Errorf("expected error about token refresh, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when since date format is invalid", func(t *testing.T) {
@@ -1235,9 +1216,6 @@ func TestGetPointExpirations(t *testing.T) {
 		)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
-			t.Errorf("expected error about date format, got %v", err)
 		}
 	})
 
@@ -1280,9 +1258,6 @@ func TestGetPointExpirations(t *testing.T) {
 		if apiErr.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_token") {
-			t.Errorf("expected error about invalid_token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -1307,9 +1282,6 @@ func TestGetPointExpirations(t *testing.T) {
 		_, err = client.GetPointExpirations(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }

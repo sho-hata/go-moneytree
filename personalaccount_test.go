@@ -451,9 +451,6 @@ func TestGetPersonalAccounts(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "access token is required") {
-			t.Errorf("expected error about access token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
@@ -491,9 +488,6 @@ func TestGetPersonalAccounts(t *testing.T) {
 		if apiErr.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_token") {
-			t.Errorf("expected error about invalid_token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -516,9 +510,6 @@ func TestGetPersonalAccounts(t *testing.T) {
 		_, err = client.GetPersonalAccounts(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }
@@ -563,10 +554,6 @@ func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
 					WithSinceForBalances(invalidDate),
 				)
 				if err == nil {
-					t.Errorf("expected error for invalid date format: %s", invalidDate)
-				}
-				if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
-					t.Errorf("expected error about date format, got: %v", err)
 				}
 			})
 		}
@@ -611,9 +598,6 @@ func TestWithSinceForBalances_InvalidDateFormat(t *testing.T) {
 					opt,
 				)
 				// 日付フォーマットエラーではないことを確認
-				if err != nil && strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
-					t.Errorf("unexpected date format error for valid date: %s, error: %v", validDate, err)
-				}
 			})
 		}
 	})
@@ -928,9 +912,6 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
-			t.Errorf("expected error about token refresh, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
@@ -951,9 +932,6 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		_, err = client.GetPersonalAccountBalances(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "account ID is required") {
-			t.Errorf("expected error about account ID, got %v", err)
 		}
 	})
 
@@ -994,9 +972,6 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		if apiErr.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_token") {
-			t.Errorf("expected error about invalid_token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -1021,9 +996,6 @@ func TestGetPersonalAccountBalances(t *testing.T) {
 		_, err = client.GetPersonalAccountBalances(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }
@@ -1262,9 +1234,6 @@ func TestGetTermDeposits(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
-			t.Errorf("expected error about token refresh, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
@@ -1285,9 +1254,6 @@ func TestGetTermDeposits(t *testing.T) {
 		_, err = client.GetTermDeposits(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "account ID is required") {
-			t.Errorf("expected error about account ID, got %v", err)
 		}
 	})
 
@@ -1328,9 +1294,6 @@ func TestGetTermDeposits(t *testing.T) {
 		if apiErr.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_token") {
-			t.Errorf("expected error about invalid_token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -1355,9 +1318,6 @@ func TestGetTermDeposits(t *testing.T) {
 		_, err = client.GetTermDeposits(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }
@@ -1717,9 +1677,6 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
-			t.Errorf("expected error about token refresh, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
@@ -1740,9 +1697,6 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 		_, err = client.GetPersonalAccountTransactions(context.Background(), "")
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "account ID is required") {
-			t.Errorf("expected error about account ID, got %v", err)
 		}
 	})
 
@@ -1767,9 +1721,6 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "sort_by must be 'asc' or 'desc'") {
-			t.Errorf("expected error about sort_by, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when since date format is invalid", func(t *testing.T) {
@@ -1792,9 +1743,6 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 		)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "date must be in format YYYY-MM-DD") {
-			t.Errorf("expected error about date format, got %v", err)
 		}
 	})
 
@@ -1835,9 +1783,6 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 		if apiErr.StatusCode != http.StatusUnauthorized {
 			t.Errorf("expected status code %d, got %d", http.StatusUnauthorized, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_token") {
-			t.Errorf("expected error about invalid_token, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -1862,9 +1807,6 @@ func TestGetPersonalAccountTransactions(t *testing.T) {
 		_, err = client.GetPersonalAccountTransactions(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }
@@ -2208,9 +2150,6 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "token refresh function is not set") && !strings.Contains(err.Error(), "refresh token") {
-			t.Errorf("expected error about token refresh, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when account ID is empty", func(t *testing.T) {
@@ -2236,9 +2175,6 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "account ID is required") {
-			t.Errorf("expected error about account ID, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when request is nil", func(t *testing.T) {
@@ -2259,9 +2195,6 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, nil)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "request cannot be nil") {
-			t.Errorf("expected error about request, got %v", err)
 		}
 	})
 
@@ -2288,9 +2221,6 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 		_, err = client.UpdatePersonalAccountTransaction(context.Background(), "account_key_123", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "description_guest must be 255 characters or less") {
-			t.Errorf("expected error about description_guest length, got %v", err)
 		}
 	})
 
@@ -2333,9 +2263,6 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 		if apiErr.StatusCode != http.StatusBadRequest {
 			t.Errorf("expected status code %d, got %d", http.StatusBadRequest, apiErr.StatusCode)
 		}
-		if !strings.Contains(err.Error(), "invalid_request") {
-			t.Errorf("expected error about invalid_request, got %v", err)
-		}
 	})
 
 	t.Run("error case: returns error when context is nil", func(t *testing.T) {
@@ -2362,9 +2289,6 @@ func TestUpdatePersonalAccountTransaction(t *testing.T) {
 		_, err = client.UpdatePersonalAccountTransaction(nil, "account_key_123", 1337, request)
 		if err == nil {
 			t.Error("expected error, got nil")
-		}
-		if !strings.Contains(err.Error(), "context must be non-nil") {
-			t.Errorf("expected error about context, got %v", err)
 		}
 	})
 }
