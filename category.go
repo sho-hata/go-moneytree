@@ -144,3 +144,56 @@ func (c *Client) GetCategories(ctx context.Context, accessToken string, opts ...
 	}
 	return &res, nil
 }
+
+// CreateCategoryRequest represents a request to create a new category.
+type CreateCategoryRequest struct {
+	// Name is the name of the category.
+	Name string `json:"name"`
+	// ParentID is the ID of the parent category.
+	ParentID int64 `json:"parent_id"`
+}
+
+// CreateCategory creates a new category.
+// This endpoint requires the transactions_write OAuth scope.
+//
+// This API creates a new category for the guest user.
+// The created category will have IsSystem set to false, meaning it is a user-created category
+// that cannot be seen by other guests.
+//
+// Example:
+//
+//	request := &moneytree.CreateCategoryRequest{
+//		Name:     "新しいカテゴリー",
+//		ParentID: 0,
+//	}
+//	category, err := client.CreateCategory(ctx, accessToken, request)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("Created category: ID=%d, Name=%s\n", category.ID, category.Name)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/post-link-categories
+func (c *Client) CreateCategory(ctx context.Context, accessToken string, req *CreateCategoryRequest) (*Category, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if req == nil {
+		return nil, fmt.Errorf("request cannot be nil")
+	}
+	if req.Name == "" {
+		return nil, fmt.Errorf("name is required")
+	}
+
+	urlPath := "link/categories.json"
+
+	httpReq, err := c.NewRequest(ctx, http.MethodPost, urlPath, req, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res Category
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
