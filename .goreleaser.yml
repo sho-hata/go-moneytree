@@ -1,0 +1,43 @@
+# GoReleaser configuration for go-moneytree library
+# Reference: https://goreleaser.com/cookbooks/release-a-library/
+
+# Skip building binaries since this is a library
+builds:
+  - skip: true
+
+# Release configuration
+release:
+  # GitHub release settings
+  github:
+    owner: sho-hata
+    name: go-moneytree
+
+# Changelog configuration
+changelog:
+  # Use git commits for changelog
+  use: git
+  # Changelog filters
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+# Snapshot configuration
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+# Archive configuration (for source archives)
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_src"
+    files:
+      - go.mod
+      - go.sum
+      - "*.go"
+      - "**/*.go"
+      - LICENSE
+      - README.md
+
