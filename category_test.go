@@ -1145,3 +1145,313 @@ func TestGetCategory(t *testing.T) {
 	})
 }
 
+func TestUpdateCategory(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success case: category is updated correctly", func(t *testing.T) {
+		t.Parallel()
+
+		categoryID := int64(123)
+		expectedResponse := Category{
+			ID:          categoryID,
+			EntityKey:   nil,
+			CategoryType: nil,
+			Name:        "更新されたカテゴリー名",
+			ParentID:    int64Ptr(0),
+			IsSystem:    false,
+			CreatedAt:   "2023-01-01T00:00:00Z",
+			UpdatedAt:   "2023-01-02T00:00:00Z",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPut {
+				t.Errorf("expected method %s, got %s", http.MethodPut, r.Method)
+			}
+			expectedPath := fmt.Sprintf("/link/categories/%d.json", categoryID)
+			if r.URL.Path != expectedPath {
+				t.Errorf("expected path %s, got %s", expectedPath, r.URL.Path)
+			}
+			authHeader := r.Header.Get("Authorization")
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				t.Errorf("expected Authorization header with Bearer prefix, got %s", authHeader)
+			}
+			contentType := r.Header.Get("Content-Type")
+			if contentType != "application/json" {
+				t.Errorf("expected Content-Type application/json, got %s", contentType)
+			}
+
+			var req UpdateCategoryRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Errorf("failed to decode request: %v", err)
+			}
+			if req.Name != "更新されたカテゴリー名" {
+				t.Errorf("expected Name '更新されたカテゴリー名', got %s", req.Name)
+			}
+			if req.ParentID != 0 {
+				t.Errorf("expected ParentID 0, got %d", req.ParentID)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCategoryRequest{
+			Name:     "更新されたカテゴリー名",
+			ParentID: 0,
+		}
+
+		response, err := client.UpdateCategory(context.Background(), "test-access-token", categoryID, request)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.ID != categoryID {
+			t.Errorf("expected ID %d, got %d", categoryID, response.ID)
+		}
+		if response.Name != "更新されたカテゴリー名" {
+			t.Errorf("expected Name '更新されたカテゴリー名', got %s", response.Name)
+		}
+		if response.ParentID == nil || *response.ParentID != 0 {
+			t.Errorf("expected ParentID 0, got %v", response.ParentID)
+		}
+		if response.UpdatedAt == "" {
+			t.Error("expected UpdatedAt, got empty")
+		}
+	})
+
+	t.Run("success case: category is updated with parent_id", func(t *testing.T) {
+		t.Parallel()
+
+		categoryID := int64(456)
+		parentID := int64(10)
+		expectedResponse := Category{
+			ID:          categoryID,
+			EntityKey:   nil,
+			CategoryType: nil,
+			Name:        "サブカテゴリー",
+			ParentID:    &parentID,
+			IsSystem:    false,
+			CreatedAt:   "2023-01-01T00:00:00Z",
+			UpdatedAt:   "2023-01-02T00:00:00Z",
+		}
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req UpdateCategoryRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Errorf("failed to decode request: %v", err)
+			}
+			if req.ParentID != parentID {
+				t.Errorf("expected ParentID %d, got %d", parentID, req.ParentID)
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(expectedResponse); err != nil {
+				t.Errorf("failed to encode response: %v", err)
+			}
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCategoryRequest{
+			Name:     "サブカテゴリー",
+			ParentID: parentID,
+		}
+
+		response, err := client.UpdateCategory(context.Background(), "test-access-token", categoryID, request)
+		if err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+
+		if response == nil {
+			t.Fatal("expected response, got nil")
+		}
+		if response.ParentID == nil || *response.ParentID != parentID {
+			t.Errorf("expected ParentID %d, got %v", parentID, response.ParentID)
+		}
+	})
+
+	t.Run("error case: returns error when access token is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCategoryRequest{
+			Name:     "テストカテゴリー",
+			ParentID: 0,
+		}
+
+		_, err = client.UpdateCategory(context.Background(), "", 123, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "access token is required") {
+			t.Errorf("expected error about access token, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when request is nil", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		_, err = client.UpdateCategory(context.Background(), "test-token", 123, nil)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "request cannot be nil") {
+			t.Errorf("expected error about request, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when name is empty", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCategoryRequest{
+			Name:     "",
+			ParentID: 0,
+		}
+
+		_, err = client.UpdateCategory(context.Background(), "test-token", 123, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "name is required") {
+			t.Errorf("expected error about name, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when API returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error": "invalid_request", "error_description": "Category not found or cannot be updated."}`))
+		}))
+		defer server.Close()
+
+		baseURL, err := url.Parse(server.URL + "/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCategoryRequest{
+			Name:     "テストカテゴリー",
+			ParentID: 0,
+		}
+
+		_, err = client.UpdateCategory(context.Background(), "test-token", 99999, request)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) {
+			t.Errorf("expected APIError, got %T", err)
+		}
+		if apiErr.StatusCode != http.StatusBadRequest {
+			t.Errorf("expected status code %d, got %d", http.StatusBadRequest, apiErr.StatusCode)
+		}
+		if !strings.Contains(err.Error(), "invalid_request") {
+			t.Errorf("expected error about invalid_request, got %v", err)
+		}
+	})
+
+	t.Run("error case: returns error when context is nil", func(t *testing.T) {
+		t.Parallel()
+
+		baseURL, err := url.Parse("https://test.getmoneytree.com/")
+		if err != nil {
+			t.Fatalf("failed to parse base URL: %v", err)
+		}
+
+		client := &Client{
+			httpClient: http.DefaultClient,
+			config: &Config{
+				BaseURL: baseURL,
+			},
+		}
+
+		request := &UpdateCategoryRequest{
+			Name:     "テストカテゴリー",
+			ParentID: 0,
+		}
+
+		// nolint:staticcheck // passing nil context for testing purposes
+		_, err = client.UpdateCategory(nil, "test-token", 123, request) //nolint:staticcheck
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context must be non-nil") {
+			t.Errorf("expected error about context, got %v", err)
+		}
+	})
+}
+

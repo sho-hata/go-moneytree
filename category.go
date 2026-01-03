@@ -230,3 +230,55 @@ func (c *Client) GetCategory(ctx context.Context, accessToken string, categoryID
 	}
 	return &res, nil
 }
+
+// UpdateCategoryRequest represents a request to update a category.
+type UpdateCategoryRequest struct {
+	// Name is the name of the category.
+	Name string `json:"name"`
+	// ParentID is the ID of the parent category.
+	ParentID int64 `json:"parent_id"`
+}
+
+// UpdateCategory updates a category.
+// This endpoint requires the transactions_write OAuth scope.
+//
+// This API updates an existing category for the guest user.
+// Only user-created categories (IsSystem == false) can be updated.
+//
+// Example:
+//
+//	request := &moneytree.UpdateCategoryRequest{
+//		Name:     "更新されたカテゴリー名",
+//		ParentID: 0,
+//	}
+//	category, err := client.UpdateCategory(ctx, accessToken, 123, request)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("Updated category: ID=%d, Name=%s\n", category.ID, category.Name)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/put-link-category
+func (c *Client) UpdateCategory(ctx context.Context, accessToken string, categoryID int64, req *UpdateCategoryRequest) (*Category, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if req == nil {
+		return nil, fmt.Errorf("request cannot be nil")
+	}
+	if req.Name == "" {
+		return nil, fmt.Errorf("name is required")
+	}
+
+	urlPath := fmt.Sprintf("link/categories/%d.json", categoryID)
+
+	httpReq, err := c.NewRequest(ctx, http.MethodPut, urlPath, req, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res Category
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
