@@ -93,7 +93,8 @@ for _, transaction := range response.Transactions {
 | Point Accounts     | Get Expirations       | Available       |
 | Institutions       | Get Institutions      | Available       |
 | Category           | All                   | Not Implemented |
-| 2FA                | All                   | Not Implemented |
+| 2FA                | Submit 2FA            | Available       |
+| 2FA                | Get Captcha           | Available       |
 
 ## Authentication availability
 

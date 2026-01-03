@@ -108,3 +108,56 @@ func (c *Client) SubmitAccount2FA(ctx context.Context, accessToken string, accou
 	}
 	return nil
 }
+
+// CaptchaImage represents the CAPTCHA image information returned by the Moneytree LINK API.
+type CaptchaImage struct {
+	// URL is the URL pointing to the CAPTCHA image that needs to be solved.
+	// Users should download the image from this URL, display it to end users,
+	// collect text input, and submit it via the SubmitAccount2FA endpoint.
+	URL string `json:"url"`
+}
+
+// GetAccountCaptcha retrieves the CAPTCHA image URL for an account that requires CAPTCHA authentication.
+// This endpoint requires the accounts_read OAuth scope.
+//
+// This API is used when an account's authentication status is "suspended.missing-answer.auth.captcha".
+// The response contains a URL pointing to the CAPTCHA image. Users should:
+// 1. Download the image from the provided URL
+// 2. Display the image to end users
+// 3. Collect text input from users
+// 4. Submit the text via the SubmitAccount2FA endpoint
+//
+// Account status requirement:
+//   - The account's authentication status must be "suspended.missing-answer.auth.captcha"
+//   - If the account is not in the correct status, 400 Bad Request will be returned
+//
+// Example:
+//
+//	captchaImage, err := client.GetAccountCaptcha(ctx, accessToken, "account_key_123")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("CAPTCHA image URL: %s\n", captchaImage.URL)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-account-captcha
+func (c *Client) GetAccountCaptcha(ctx context.Context, accessToken string, accountID string) (*CaptchaImage, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+	if accountID == "" {
+		return nil, fmt.Errorf("account ID is required")
+	}
+
+	urlPath := fmt.Sprintf("link/accounts/%s/captcha.json", url.PathEscape(accountID))
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res CaptchaImage
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
