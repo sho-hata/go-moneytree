@@ -197,3 +197,36 @@ func (c *Client) CreateCategory(ctx context.Context, accessToken string, req *Cr
 	}
 	return &res, nil
 }
+
+// GetCategory retrieves a specific category by its ID.
+// This endpoint requires the transactions_read OAuth scope.
+//
+// This API returns the category information for the specified category ID.
+//
+// Example:
+//
+//	category, err := client.GetCategory(ctx, accessToken, 1048)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	fmt.Printf("Category: ID=%d, Name=%s, IsSystem=%v\n", category.ID, category.Name, category.IsSystem)
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-category
+func (c *Client) GetCategory(ctx context.Context, accessToken string, categoryID int64) (*Category, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+
+	urlPath := fmt.Sprintf("link/categories/%d.json", categoryID)
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res Category
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
