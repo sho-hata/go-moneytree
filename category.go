@@ -314,3 +314,63 @@ func (c *Client) DeleteCategory(ctx context.Context, accessToken string, categor
 	}
 	return nil
 }
+
+// GetSystemCategories retrieves the list of system categories.
+// This endpoint does not require any OAuth scope.
+// You can use a client_credentials access token to retrieve system categories.
+//
+// This API returns all system categories defined by Moneytree.
+// System categories are common categories that all guests can use.
+// Unlike GetCategories, this API does not return user-created categories.
+//
+// Note: The ID field may differ between staging and production environments.
+// Use EntityKey instead of ID to identify categories consistently across environments.
+//
+// Example:
+//
+//	client := moneytree.NewClient("jp-api-staging")
+//	response, err := client.GetSystemCategories(ctx, accessToken)
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	for _, category := range response.Categories {
+//		fmt.Printf("System category: %s (EntityKey: %s)\n", category.Name, *category.EntityKey)
+//	}
+//
+// Reference: https://docs.link.getmoneytree.com/reference/get-link-categories-system
+func (c *Client) GetSystemCategories(ctx context.Context, accessToken string, opts ...GetCategoriesOption) (*Categories, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("access token is required")
+	}
+
+	options := &getCategoriesOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	urlPath := "link/categories/system.json"
+	queryParams := url.Values{}
+	if options.Page != nil {
+		queryParams.Set("page", fmt.Sprintf("%d", *options.Page))
+	}
+	if options.Locale != nil {
+		if *options.Locale != "en" && *options.Locale != "ja" {
+			return nil, fmt.Errorf("locale must be either 'en' or 'ja', got %s", *options.Locale)
+		}
+		queryParams.Set("locale", *options.Locale)
+	}
+	if len(queryParams) > 0 {
+		urlPath = fmt.Sprintf("%s?%s", urlPath, queryParams.Encode())
+	}
+
+	httpReq, err := c.NewRequest(ctx, http.MethodGet, urlPath, nil, WithBearerToken(accessToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	var res Categories
+	if _, err = c.Do(ctx, httpReq, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
