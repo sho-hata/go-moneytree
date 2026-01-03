@@ -12,6 +12,7 @@ import (
 
 const (
 	// oauthTokenPath is the path for the OAuth token endpoint.
+	// nolint:gosec // G101: This is a URL path, not a credential
 	oauthTokenPath = "oauth/token"
 	// oauthRevokePath is the path for the OAuth revoke endpoint.
 	oauthRevokePath = "oauth/revoke"
@@ -214,6 +215,7 @@ func (c *Client) refreshToken(ctx context.Context) error {
 		}
 
 		// Another goroutine is refreshing the token, wait a bit and retry
+		// nolint:gosec // G404: Using math/rand is acceptable for wait time jitter (not security-sensitive)
 		waitTime := time.Duration(100+rand.Intn(100)) * time.Millisecond
 		if err := sleepWithContext(ctx, waitTime); err != nil {
 			return err

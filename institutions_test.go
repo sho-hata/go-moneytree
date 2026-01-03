@@ -337,8 +337,8 @@ func TestGetInstitutions(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		_, err = client.GetInstitutions(nil)
 		if err == nil {
 			t.Error("expected error, got nil")

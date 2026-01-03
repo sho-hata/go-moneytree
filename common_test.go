@@ -278,8 +278,8 @@ func TestGetAccountBalanceDetails(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		_, err = client.GetAccountBalanceDetails(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -709,8 +709,8 @@ func TestGetAccountDueBalances(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		_, err = client.GetAccountDueBalances(nil, accountID)
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -720,4 +720,3 @@ func TestGetAccountDueBalances(t *testing.T) {
 		}
 	})
 }
-

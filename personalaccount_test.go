@@ -511,8 +511,8 @@ func TestGetPersonalAccounts(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		_, err = client.GetPersonalAccounts(nil)
 		if err == nil {
 			t.Error("expected error, got nil")

@@ -528,8 +528,8 @@ func TestGetAccountGroups(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		_, err = client.GetAccountGroups(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -700,8 +700,8 @@ func TestRefreshProfile(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		err = client.RefreshProfile(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
@@ -875,8 +875,8 @@ func TestRefreshAccountGroup(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		err = client.RefreshAccountGroup(nil, 12345)
 		if err == nil {
 			t.Error("expected error, got nil")

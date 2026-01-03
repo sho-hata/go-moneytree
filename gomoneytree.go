@@ -208,13 +208,24 @@ func isRateLimitError(err error) bool {
 // Formula: wait_interval = base * 2^n +/- jitter
 // Reference: https://docs.link.getmoneytree.com/docs/faq-rate-limiting
 func calculateBackoffDelay(baseDelay time.Duration, retryCount int) time.Duration {
+	// Limit retryCount to prevent integer overflow
+	if retryCount < 0 {
+		retryCount = 0
+	}
+	if retryCount > 30 {
+		retryCount = 30 // Limit to prevent overflow
+	}
+
 	// Calculate exponential backoff: base * 2^n
+	// nolint:gosec // G115: retryCount is limited to 30, preventing overflow
 	delay := baseDelay * time.Duration(1<<uint(retryCount))
 
 	// Add jitter: random value between 0 and baseDelay
+	// nolint:gosec // G404: Using math/rand is acceptable for jitter calculation (not security-sensitive)
 	jitter := time.Duration(rand.Int63n(int64(baseDelay)))
 
 	// Randomly add or subtract jitter
+	// nolint:gosec // G404: Using math/rand is acceptable for jitter calculation (not security-sensitive)
 	if rand.Intn(2) == 0 {
 		delay += jitter
 	} else {
@@ -230,6 +241,7 @@ func calculateBackoffDelay(baseDelay time.Duration, retryCount int) time.Duratio
 // cloneRequest creates a clone of the HTTP request with a fresh body.
 // This is necessary for retrying requests since the body can only be read once.
 // The bodyBytes parameter should contain the original request body bytes.
+// nolint:unparam // error return is kept for consistency with potential future error cases
 func cloneRequest(req *http.Request, bodyBytes []byte) (*http.Request, error) {
 	cloned := req.Clone(req.Context())
 	if len(bodyBytes) > 0 {

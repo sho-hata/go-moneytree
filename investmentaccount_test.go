@@ -426,8 +426,8 @@ func TestGetInvestmentAccounts(t *testing.T) {
 			},
 		}
 
-		// nolint:staticcheck // passing nil context for testing purposes
 		setTestToken(client, "test-token")
+		// nolint:staticcheck // passing nil context for testing purposes
 		_, err = client.GetInvestmentAccounts(nil)
 		if err == nil {
 			t.Error("expected error, got nil")
